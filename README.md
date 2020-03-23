@@ -1,8 +1,8 @@
-### Tajniacy
+# Tajniacy
 Wykonani z użyciem: [Start Bootstrap - Bare](https://startbootstrap.com/template-overviews/bare/)
 
-# Instalacja:
+### Instalacja:
 `yarn`
 
-# Uruchomienie:
+### Uruchomienie:
 `yarn start`
