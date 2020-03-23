@@ -1,0 +1,55 @@
+.card {
+    background-color: antiquewhite;
+    padding-top: 10%;
+    margin-left: 1em;
+    margin-top: 1em;
+}
+
+.card-bottom {
+	bottom: 0;
+	left: 0;
+	position: absolute;
+	width: 100%;
+}
+.card-word {
+    margin-bottom: 1em;
+    margin-left: auto;
+    margin-right: auto;
+    width: 80%;
+    text-align: center;
+    background-color:white;
+    padding: 0.25em;
+}
+
+.playground .card .card-color {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	opacity: 0;
+}
+
+.playground .card.clicked .card-color {
+	opacity: 0.75;
+}
+
+.playground.leader .card:not(.clicked) .card-color {
+	opacity: 0.25;
+}
+
+.playground .card.red .card-color {
+	background-color: red;
+}
+
+.playground .card.blue .card-color {
+	background-color: blue;
+}
+
+.playground .card.black .card-color {
+	background-color: black;
+}
+
+.playground .card.grey .card-color {
+	background-color: grey;
+}
