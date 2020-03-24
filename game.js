@@ -28,8 +28,16 @@ function shuffle(array) {
     return array;
 }
 
-function setState(state) {
-	console.log('setState', state)
+function updateLink() {
+	const link = document.location.href.split('?')[0] + "?" + encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(state))))
+
+	$('#link').attr('value', link)
+}
+
+function setState(newState) {
+	console.log('setState', newState)
+	state = newState
+
 	$('.card').each((i, e) => {
 		const el = $(e)
 		const tile = state.map[i]
@@ -47,9 +55,7 @@ function setState(state) {
 			el.removeClass('clicked')
 	});
 
-	const link = document.location.origin + "/?" + encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(state))))
-
-	$('#link').attr('value', link)
+	updateLink()
 }
 
 function startNewGame() {
@@ -63,6 +69,7 @@ function startNewGame() {
 	for (var color in counts) {
 		colors.push(...new Array(counts[color]).fill(color))
 	}
+
 	shuffle(colors)
 
 	setState({
@@ -98,6 +105,11 @@ $(function() {
 
 	$('.card').append('<div class="card-color"></div><div class="card-bottom"><div class="card-word"></div></div>')
 
+
+	$('.card').each((i, e) => {
+		$(e).data('i', i)
+	})
+
 	$('.new-game').click(function() {
 		startNewGame();
 	})
@@ -107,13 +119,16 @@ $(function() {
 	})
 
 	$('.card').click(function() {
-		const i = $(this).index()
+		const i = $(this).data('i')
+		state.map[i].clicked = true
+
 		$(this).addClass('clicked')
+
+		updateLink()
 	})
 
 	$('#link').on('click', function() {
 		this.setSelectionRange(0, this.value.length)
-
 	})
 
 	loadState();
