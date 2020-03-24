@@ -47,12 +47,16 @@ function setState(state) {
 			el.removeClass('clicked')
 	});
 
-	const link = document.location.origin + "/?" + encodeURIComponent(btoa(JSON.stringify(state)))
+	const link = document.location.origin + "/?" + encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(state))))
 
 	$('#link').attr('value', link)
 }
 
 function startNewGame() {
+	if (!allWords.length) {
+		alert("Lista słów nie została załadowana...")
+		return;
+	}
 	const words = shuffle([...allWords]).slice(0,25)
 	const first = shuffle(['red', 'blue'])[0]
 	const colors = [first]
@@ -73,14 +77,17 @@ function startNewGame() {
 function loadState() {
 	if (document.location.search) {
 		try {
-			setState(JSON.parse(atob(decodeURIComponent(document.location.search.substr(1)))));
+			setState(JSON.parse(decodeURIComponent(atob(decodeURIComponent(document.location.search.substr(1))))));
 			return
 		} catch(e) {
 			console.error('Error at loadState:', e)
 			alert(`Błąd ładowania stanu: ${e.message}`)
 		}
 	}
-	startNewGame();
+}
+
+function documentReady() {
+	return new Promise((resolve, reject) => $(resolve));
 }
 
 let state = {}
@@ -110,4 +117,18 @@ $(function() {
 	})
 
 	loadState();
+})
+
+Promise.all([
+	documentReady(),
+	fetch('words.min.json')
+		.then((r) => r.json())
+		.then((j) => {
+			allWords.push(...j.words);
+			extraWords.push(...j.extra);
+		})
+]).then(() => {
+	if (!state.map) {
+		startNewGame();
+	}
 })
