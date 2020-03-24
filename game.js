@@ -1,4 +1,6 @@
-const allWords = [...Array(100).keys()].map((e) => '' + e);
+const allWords = []
+const extraWords = []
+
 const counts = {
 	blue: 8,
 	red: 8,

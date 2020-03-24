@@ -3,6 +3,7 @@
     padding-top: 10%;
     margin-left: 1em;
     margin-top: 1em;
+    border-radius: 15px;
 }
 
 .card-bottom {
@@ -19,8 +20,13 @@
     text-align: center;
     background-color:white;
     padding: 0.25em;
+    border-radius: 5px;
+    font-weight: bold;
 }
 
+.card-color {
+	border-radius: 15px;
+}
 .playground .card .card-color {
 	position: absolute;
 	top: 0;
@@ -51,5 +57,5 @@
 }
 
 .playground .card.grey .card-color {
-	background-color: grey;
+	background-color: khaki;
 }
