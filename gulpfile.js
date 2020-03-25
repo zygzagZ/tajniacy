@@ -10,7 +10,7 @@ const merge = require('merge-stream')
 function browserSync(done) {
   browsersync.init({
     server: {
-      baseDir: './'
+      baseDir: './app/'
     },
     port: 3000
   })

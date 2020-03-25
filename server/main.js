@@ -1,19 +1,31 @@
 #!/usr/bin/env nodejs
-const dir = path.join(__dirname, '/musicPage/')
+import Room from './Room'
+
+const path = require('path')
+const dir = path.join(__dirname, '../app/')
 const express = require('express')
 const fs = require('fs')
-const crypto = require('crypto')
 
-var app = express()
+const dictionary = JSON.parse(fs.readFileSync('./words.json'))
+const app = express()
+const rooms = {}
+
+const dictionaryNames = Object.keys(dictionary)
 
 require('express-ws')(app)
 const expressStatic = express.static(dir)
-app.use((req, res, next) => {
-  if (req.originalUrl.substr(0, 2) === '/?') {
-    return next()
-  }
-  return expressStatic(req, res, next)
+app.use(expressStatic)
+
+app.get('/dictionary.json', (res, req) => {
+  req.send(dictionaryNames)
 })
-app.ws('/ws', wsHandler)
+
+app.ws('/:id', (ws, req) => {
+  const id = req.params.id; let room = rooms[id]
+  if (!room) {
+    room = new Room(dictionary, dictionaryNames[0])
+  }
+  room.addMember(ws)
+})
 
 app.listen(3000)

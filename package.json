@@ -32,6 +32,8 @@
         "bootstrap": "4.3.1",
         "eslint": "^6.8.0",
         "eslint-plugin-json": "^2.1.1",
+        "express": "^4.17.1",
+        "express-ws": "^4.0.0",
         "jquery": "3.4.1",
         "standard": "^14.3.3"
     },
