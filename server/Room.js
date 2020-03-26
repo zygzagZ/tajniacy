@@ -22,8 +22,10 @@ export default class Room {
     this.members = []
     this.leaders = []
     this.map = []
+
     this.setKind(kind)
     this.restart()
+    console.log('new room', this.di)
   }
 
   setKind(kind) {
@@ -32,6 +34,7 @@ export default class Room {
   }
 
   restart() {
+    console.log('restart!')
     const words = shuffle([...this.dictionary[this.kind]]).slice(0, 25)
     const first = shuffle(['red', 'blue'])[0]
 
@@ -48,28 +51,47 @@ export default class Room {
       clicked: false
     }))
 
-    this.broadcast({ map: this.map })
+    this.members.forEach((socket) => this.sendMap(socket))
+  }
+
+  sendMap(socket) {
+    const view = {
+      map: this.map.map((e) => {
+        const tile = {
+          clicked: e.clicked,
+          word: e.word
+        }
+        if (socket.leader || tile.clicked) tile.color = e.color
+        return tile
+      })
+    }
+    socket.sendJSON(view)
   }
 
   addLeader(socket) {
-    if (this.leaders.indexOf(socket) >= 0) return
-    this.leader = socket
+    if (socket.leader) return
     socket.leader = true
+    this.leaders.push(socket)
+    socket.sendJSON({ leader: true })
   }
 
   removeLeader(socket) {
+    if (!socket.leader) return
     this.leaders = this.leaders.filter((e) => e !== socket)
     socket.leader = false
+    socket.sendJSON({ leader: false })
   }
 
   addMember(socket) {
+    console.log('addMember')
     if (this.members.indexOf(socket) < 0) {
       this.members.push(socket)
     }
     if (this.members.length === 1) {
       this.addLeader(socket)
-      socket.send({ id: this.id })
     }
+    this.sendMap(socket)
+    socket.sendJSON({ leader: socket.leader })
   }
 
   removeMember(socket) {
@@ -77,6 +99,7 @@ export default class Room {
   }
 
   clickTile(tileIndex) {
+    console.log('onCLick', tileIndex)
     const tile = this.map[tileIndex]
     if (!tile || tile.clicked) return
     tile.clicked = true
@@ -84,18 +107,17 @@ export default class Room {
   }
 
   broadcast(data) {
-    this.members.forEach((socket) => socket.send(data))
+    this.members.forEach((socket) => socket.sendJSON(data))
   }
 
   onMessage(socket, msg) {
+    console.log('onMessage', msg, 'leader?', socket.leader)
     switch (msg.type) {
-      case 'getMap':
-        socket.send({ map: this.map, id: this.id })
-        break
       case 'setNick':
         this.setNick(socket, msg.nick)
         break
       default:
+        console.log('ayy default')
         if (!socket.leader) return
         switch (msg.type) {
           case 'addLeader':
@@ -114,7 +136,17 @@ export default class Room {
   }
 
   onSocket(socket) {
-    socket.onmessage = (msg) => this.onMessage(socket, msg)
+    socket.on('message', (data) => {
+      try {
+        this.onMessage(socket, JSON.parse(data))
+      } catch (err) {
+        console.error(err, data)
+      }
+    })
+    socket.on('close', (e) => this.removeMember(socket))
+    socket.on('error', (e) => console.log('error', e))
+    socket.on('open', (e) => console.log('open', e))
+    socket.sendJSON = (data) => socket.send(JSON.stringify(data))
     this.addMember(socket)
   }
 }

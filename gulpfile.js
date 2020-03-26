@@ -101,12 +101,10 @@ function run(cb) {
 }
 
 function watch() {
-  gulp.watch('./dist/app/*.html').on('change', browsersync.reload)
-  gulp.watch('./dist/app/css/**/*.scss', css)
-  gulp.watch('./dist/app/js/**/*.js', js)
+  gulp.watch('./dist/app/**/*').on('change', browsersync.reload)
   gulp.watch(['./app/*.html', './app/static/**/*']).on('change', resources)
   gulp.watch('./app/css/**/*', css)
-  gulp.watch('./app/js/**/*.js', js)
+  gulp.watch(['./app/js/**/*.js', './server/**/*'], js)
 }
 
 function browserSync() {

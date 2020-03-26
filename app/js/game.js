@@ -5,15 +5,11 @@ const counts = {
   grey: 7
 }
 
-function updateLink() {
-  const link = document.location.href.split('?')[0] + '?' + encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(state))))
-
-  $('#link').attr('value', link)
-}
-
 function setState(newState) {
-  console.log('setState', newState)
+  console.log('setState', JSON.stringify(newState))
   state = newState
+
+  if (!state.map) return
 
   $('.card').each((i, e) => {
     const el = $(e)
@@ -23,35 +19,33 @@ function setState(newState) {
       if (color !== tile.color) { el.removeClass(color) }
     }
 
-    el.find('.card-word').text(tile.word)
-    el.addClass(tile.color)
+    el.find('.card-word').text(`${tile.word} ${tile.color}`)
+    if (tile.color) el.addClass(tile.color)
 
     if (tile.clicked) { el.addClass('clicked') } else { el.removeClass('clicked') }
   })
 
-  updateLink()
+  if (state.leader) $('.new-game').show()
+  else $('.new-game').hide()
 }
 
-function loadState() {
-  if (document.location.search) {
-    try {
-      setState(JSON.parse(decodeURIComponent(atob(decodeURIComponent(document.location.search.substr(1))))))
-    } catch (e) {
-      console.error('Error at loadState:', e)
-      alert(`Błąd ładowania stanu: ${e.message}`)
+function extend(source, target) {
+  for (var i in target) {
+    if (!Object.prototype.hasOwnProperty.call(target, i)) continue
+    if (typeof target[i] === 'object' && typeof source[i] === 'object') {
+      extend(source[i], target[i])
+    } else {
+      source[i] = target[i]
     }
   }
+  return source
 }
 
-function documentReady() {
-  return new Promise((resolve, reject) => $(resolve))
+function updateState(changes) {
+  setState(extend(state, changes))
 }
 
 let state = {}
-
-function connect() {
-  let ws = new WebSocket(document.location.origin)
-}
 
 $(function () {
   for (let i = 0; i < 5; i++) $('.playground').append('<div class="row">')
@@ -64,15 +58,11 @@ $(function () {
     })
     .click(function () {
       const i = $(this).data('i')
-      state.map[i].clicked = true
-
-      $(this).addClass('clicked')
-
-      updateLink()
+      ws.sendJSON({ type: 'click', tile: i })
     })
 
   $('.new-game').click(function () {
-    // startNewGame()
+    ws.sendJSON({ type: 'restart' })
   })
 
   $('.toggle-visibility').click(function () {
@@ -83,5 +73,24 @@ $(function () {
     this.setSelectionRange(0, this.value.length)
   })
 
-  loadState()
+  const ws = new WebSocket(document.location.href.replace(/^http/, 'ws'))
+
+  ws.onerror = (e) => {
+    console.error(e)
+    // alert(e)
+  }
+
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data)
+    updateState(data)
+  }
+
+  ws.onopen = (e) => console.log('open', e)
+
+  ws.onclose = (e) => console.log('close', e)
+
+  ws.sendJSON = (data) => {
+    console.log('>>>', data)
+    ws.send(JSON.stringify(data))
+  }
 })
