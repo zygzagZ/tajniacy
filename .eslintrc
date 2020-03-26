@@ -5,6 +5,11 @@
     "node": true,
     "jquery": true
   },
+  "parserOptions": {
+    "parser": "babel-eslint",
+    "ecmaVersion": 2018,
+    "sourceType": "module"
+  },
   "extends": [
     "plugin:json/recommended",
     "standard"

@@ -1,12 +1,11 @@
-#!/usr/bin/env nodejs
-const Room = require('./Room')
+import Room from './Room'
 
 const path = require('path')
 const dir = path.join(__dirname, '../app/')
 const express = require('express')
 const fs = require('fs')
 
-const dictionary = JSON.parse(fs.readFileSync('./words.json'))
+const dictionary = JSON.parse(fs.readFileSync(path.join(__dirname, './words.json')))
 const app = express()
 const rooms = {}
 

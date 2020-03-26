@@ -1,64 +1,134 @@
-'use strict'
-
-// Load plugins
-const browsersync = require('browser-sync').create()
-const del = require('del')
 const gulp = require('gulp')
+const sass = require('gulp-sass')
+const babel = require('gulp-babel')
+const postcss = require('gulp-postcss')
+const autoprefixer = require('autoprefixer')
+const sourcemaps = require('gulp-sourcemaps')
+const cssnano = require('cssnano')
+const gutil = require('gulp-util')
+const rename = require('gulp-rename')
+const browsersync = require('browser-sync').create()
+const plumber = require('gulp-plumber')
+const nodemon = require('gulp-nodemon')
+const del = require('del')
+const eslint = require('gulp-eslint')
 const merge = require('merge-stream')
 
-// BrowserSync
-function browserSync(done) {
-  browsersync.init({
-    server: {
-      baseDir: './app/'
-    },
-    port: 3000
-  })
-  done()
-}
-
-// BrowserSync reload
-function browserSyncReload(done) {
-  browsersync.reload()
-  done()
-}
-
-// Clean vendor
+// Clean assets
 function clean() {
-  return del(['./app/vendor/'])
+  return del(['./dist/'])
 }
 
-// Bring third party dependencies from node_modules into vendor directory
-function modules() {
+function css() {
+  const plugins = [autoprefixer({ browsers: ['last 2 versions'] }), cssnano()]
+
+  return merge(
+    gulp.src('./app/scss/**/*.scss')
+      .pipe(sass().on('error', sass.logError)),
+    gulp.src('./app/css/**/*.css'))
+    .pipe(postcss(plugins))
+    .pipe(rename({ suffix: '.min' }))
+    .pipe(gulp.dest('./dist/app/css'))
+    .pipe(browsersync.stream())
+}
+
+// Lint scripts
+function scriptsLint() {
+  return gulp
+    .src(['./app/**/*.js', './server/**/*.js', './gulpfile.js'])
+    .pipe(plumber())
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(eslint.failAfterError())
+}
+
+function scripts() {
   // Bootstrap
-  var bootstrap = gulp.src('./node_modules/bootstrap/dist/**/*')
-    .pipe(gulp.dest('./app/vendor/bootstrap'))
+  const bootstrap = gulp.src('./node_modules/bootstrap/dist/**/*')
+    .pipe(gulp.dest('./dist/app/vendor/bootstrap'))
 
   // jQuery
-  var jquery = gulp.src([
+  const jquery = gulp.src([
     './node_modules/jquery/dist/*',
     '!./node_modules/jquery/dist/core.js'
-  ])
-    .pipe(gulp.dest('./app/vendor/jquery'))
+  ]).pipe(gulp.dest('./dist/app/vendor/jquery'))
 
-  return merge(bootstrap, jquery)
+  const others = ['app/js', 'server'].map((el) => {
+    return merge(
+      gulp.src(`./${el}/**/*.js`)
+        .pipe(sourcemaps.init())
+        .pipe(plumber({
+          errorHandler: onError
+        }))
+        .pipe(babel({
+          presets: ['@babel/preset-env']
+        }))
+        .pipe(sourcemaps.write('.')),
+      gulp.src(`./${el}/**/*.json`))
+      .pipe(gulp.dest(`./dist/${el}/`))
+  })
+
+  return merge(bootstrap, jquery, others)
 }
 
-// Watch files
-function watchFiles() {
-  gulp.watch('./app/*.css', browserSyncReload)
-  gulp.watch('./app/*.html', browserSyncReload)
-  gulp.watch('./app/*.js', browserSyncReload)
+function resources() {
+  const files = gulp.src('./app/static/**/*')
+    .pipe(gulp.dest('./dist/app/static'))
+
+  const html = gulp.src('./app/*.html')
+    .pipe(gulp.dest('./dist/app/'))
+
+  return merge(files, html)
 }
 
-// Define complex tasks
-const vendor = gulp.series(clean, modules)
-const build = gulp.series(vendor)
-const watch = gulp.series(build, gulp.parallel(watchFiles, browserSync))
+const onError = (err) => {
+  gutil.beep()
+  console.log(err)
+}
 
-// Export tasks
-exports.clean = clean
-exports.vendor = vendor
-exports.build = build
-exports.watch = watch
-exports.default = build
+function run(cb) {
+  var started = false
+  return nodemon({
+    script: './dist/server/main.js'
+  }).on('start', function () {
+    // to avoid nodemon being started multiple times
+    // thanks @matthisk
+    if (!started) {
+      cb()
+      started = true
+    }
+  })
+}
+
+function watch() {
+  gulp.watch('./dist/app/*.html').on('change', browsersync.reload)
+  gulp.watch('./dist/app/css/**/*.scss', css)
+  gulp.watch('./dist/app/js/**/*.js', js)
+  gulp.watch(['./app/*.html', './app/static/**/*']).on('change', resources)
+  gulp.watch('./app/css/**/*', css)
+  gulp.watch('./app/js/**/*.js', js)
+}
+
+function browserSync() {
+  browsersync.init(null, {
+    proxy: 'http://localhost:3000',
+    files: ['./dist/app/**/*.*'],
+    port: 7000
+  })
+}
+
+const js = gulp.series(scriptsLint, scripts)
+const build = gulp.series(clean, gulp.parallel(css, js, resources))
+
+module.exports = {
+  nodemon,
+  js,
+  css,
+  run,
+  watch,
+  browserSync,
+  scripts,
+  scriptsLint,
+  build,
+  default: gulp.series(build, gulp.parallel(watch, browserSync, run))
+}

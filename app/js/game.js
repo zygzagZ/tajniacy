@@ -1,31 +1,8 @@
-const allWords = []
-const extraWords = []
-
 const counts = {
   blue: 8,
   red: 8,
   black: 1,
   grey: 7
-}
-
-function shuffle(array) {
-  let counter = array.length
-
-  // While there are elements in the array
-  while (counter > 0) {
-    // Pick a random index
-    const index = Math.floor(Math.random() * counter)
-
-    // Decrease counter by 1
-    counter--
-
-    // And swap the last element with it
-    const temp = array[counter]
-    array[counter] = array[index]
-    array[index] = temp
-  }
-
-  return array
 }
 
 function updateLink() {
@@ -55,29 +32,6 @@ function setState(newState) {
   updateLink()
 }
 
-function startNewGame() {
-  if (!allWords.length) {
-    alert('Lista słów nie została załadowana...')
-    return
-  }
-  const words = shuffle([...allWords]).slice(0, 25)
-  const first = shuffle(['red', 'blue'])[0]
-  const colors = [first]
-  for (var color in counts) {
-    colors.push(...new Array(counts[color]).fill(color))
-  }
-
-  shuffle(colors)
-
-  setState({
-    map: words.map((w, i) => ({
-      word: w,
-      color: colors[i],
-      clicked: false
-    }))
-  })
-}
-
 function loadState() {
   if (document.location.search) {
     try {
@@ -94,6 +48,10 @@ function documentReady() {
 }
 
 let state = {}
+
+function connect() {
+  let ws = new WebSocket(document.location.origin)
+}
 
 $(function () {
   for (let i = 0; i < 5; i++) $('.playground').append('<div class="row">')
@@ -114,7 +72,7 @@ $(function () {
     })
 
   $('.new-game').click(function () {
-    startNewGame()
+    // startNewGame()
   })
 
   $('.toggle-visibility').click(function () {
@@ -126,18 +84,4 @@ $(function () {
   })
 
   loadState()
-})
-
-Promise.all([
-  documentReady(),
-  fetch('words.min.json')
-    .then((r) => r.json())
-    .then((j) => {
-      allWords.push(...j.words)
-      extraWords.push(...j.extra)
-    })
-]).then(() => {
-  if (!state.map) {
-    startNewGame()
-  }
 })
