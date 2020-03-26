@@ -133,8 +133,7 @@ Promise.all([
   fetch('words.min.json')
     .then((r) => r.json())
     .then((j) => {
-      allWords.push(...j.words)
-      extraWords.push(...j.extra)
+      allWords.push(...j.Tajniacy)
     })
 ]).then(() => {
   if (!state.map) {
