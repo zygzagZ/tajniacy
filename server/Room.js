@@ -63,8 +63,10 @@ export default class Room {
         if (this.members.indexOf(socket) < 0) {
             this.members.push(socket)
         }
-        if (this.members.length === 1)
+        if (this.members.length === 1) {
             this.addLeader(socket)
+            socket.send({id: this.id})
+        }
     }
 
     removeMember(socket) {
@@ -72,10 +74,10 @@ export default class Room {
     }
 
     clickTile(tileIndex) {
-        if (tileIndex < 0 || tileIndex > map.length) return
-        if (map[tileIndex].clicked) return
-        map[tileIndex].clicked = true
-        this.broadcast({map: {[tileIndex]: {clicked: true}}})
+        const tile = this.map[tileIndex]
+        if (!tile || tile.clicked) return
+        tile.clicked = true
+        this.broadcast({map: {[tileIndex]: {clicked: true, color: tile.color}}})
     }
 
     broadcast(data) {
@@ -102,6 +104,8 @@ export default class Room {
                     case "restart":
                         this.restart()
                         break
+                    case "click":
+                        this.clickTile(msg.tile)
                 }
         }
     }

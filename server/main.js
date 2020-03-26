@@ -1,5 +1,5 @@
 #!/usr/bin/env nodejs
-import Room from './Room'
+const Room = require('./Room')
 
 const path = require('path')
 const dir = path.join(__dirname, '../app/')
@@ -21,9 +21,11 @@ app.get('/dictionary.json', (res, req) => {
 })
 
 app.ws('/:id', (ws, req) => {
-  const id = req.params.id; let room = rooms[id]
+  const id = req.params.id
+  let room = rooms[id]
   if (!room) {
     room = new Room(dictionary, dictionaryNames[0])
+    rooms[room.id] = room
   }
   room.addMember(ws)
 })

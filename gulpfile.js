@@ -46,8 +46,9 @@ function modules() {
 
 // Watch files
 function watchFiles() {
-  gulp.watch('./**/*.css', browserSyncReload)
-  gulp.watch('./**/*.html', browserSyncReload)
+  gulp.watch('./app/*.css', browserSyncReload)
+  gulp.watch('./app/*.html', browserSyncReload)
+  gulp.watch('./app/*.js', browserSyncReload)
 }
 
 // Define complex tasks
