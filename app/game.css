@@ -1,9 +1,13 @@
+.navbar-brand {
+	margin-left: 45%;
+}
+
 .card {
     background-color: antiquewhite;
     padding-top: 10%;
-    margin-left: 1em;
-    margin-top: 1em;
-    border-radius: 15px;
+    margin-left: 1%;
+    margin-top: 1%;
+    border-radius: 1.7vh;
 }
 
 .card-bottom {
@@ -13,19 +17,21 @@
 	width: 100%;
 }
 .card-word {
-    margin-bottom: 1em;
+    margin-bottom: 10%;
     margin-left: auto;
     margin-right: auto;
-    width: 80%;
+    width: 85%;
     text-align: center;
     background-color:white;
-    padding: 0.25em;
-    border-radius: 5px;
+    padding: 0.8vh;
+    font-size: 1.1vw;
+    border-radius: 1vw;
     font-weight: bold;
+
 }
 
 .card-color {
-	border-radius: 15px;
+	border-radius: 1.7vh;
 }
 .playground .card .card-color {
 	position: absolute;
