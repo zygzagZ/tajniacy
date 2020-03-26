@@ -43,13 +43,12 @@
 }
 
 .playground .card.clicked .card-color {
-	opacity: 0.75;
+	opacity: 1;
 }
 
 .playground.leader .card:not(.clicked) .card-color {
 	opacity: 0.25;
 }
-
 .playground .card.red .card-color {
 	background-color: red;
 }
@@ -63,5 +62,5 @@
 }
 
 .playground .card.grey .card-color {
-	background-color: khaki;
+	background-color: #deb887;
 }
