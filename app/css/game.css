@@ -46,7 +46,7 @@
 	opacity: 1;
 }
 
-.playground.leader .card:not(.clicked) .card-color {
+.playground .card:not(.clicked) .card-color {
 	opacity: 0.25;
 }
 

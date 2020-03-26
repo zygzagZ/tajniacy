@@ -25,7 +25,7 @@ export default class Room {
 
     this.setKind(kind)
     this.restart()
-    console.log('new room', this.di)
+    console.log('new room', this.id)
   }
 
   setKind(kind) {
@@ -56,14 +56,11 @@ export default class Room {
 
   sendMap(socket) {
     const view = {
-      map: this.map.map((e) => {
-        const tile = {
-          clicked: e.clicked,
-          word: e.word
-        }
-        if (socket.leader || tile.clicked) tile.color = e.color
-        return tile
-      })
+      map: this.map.map((e) => ({
+        clicked: e.clicked,
+        word: e.word,
+        color: (e.clicked || socket.leader) ? e.color : null
+      }))
     }
     socket.sendJSON(view)
   }
@@ -99,7 +96,6 @@ export default class Room {
   }
 
   clickTile(tileIndex) {
-    console.log('onCLick', tileIndex)
     const tile = this.map[tileIndex]
     if (!tile || tile.clicked) return
     tile.clicked = true
@@ -117,7 +113,6 @@ export default class Room {
         this.setNick(socket, msg.nick)
         break
       default:
-        console.log('ayy default')
         if (!socket.leader) return
         switch (msg.type) {
           case 'addLeader':

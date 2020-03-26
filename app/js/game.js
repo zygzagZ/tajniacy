@@ -19,7 +19,7 @@ function setState(newState) {
       if (color !== tile.color) { el.removeClass(color) }
     }
 
-    el.find('.card-word').text(`${tile.word} ${tile.color}`)
+    el.find('.card-word').text(tile.word)
     if (tile.color) el.addClass(tile.color)
 
     if (tile.clicked) { el.addClass('clicked') } else { el.removeClass('clicked') }
