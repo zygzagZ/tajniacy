@@ -137,6 +137,7 @@ export default class Room {
 
   setNick(socket, nick) {
     socket.nick = nick
+    this.broadcastMembers()
   }
 
   onMessage(socket, msg) {
