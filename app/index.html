@@ -20,8 +20,8 @@
 
   <!-- Navigation -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark static-top">
-    <div class="container">
-      <a class="navbar-brand" href="#">Tajniacy</a>
+    <div class="container justify-content-md-center">
+      <a class="navbar-brand " href="#">Tajniacy</a>
     </div>
   </nav>
 
@@ -34,6 +34,39 @@
     </div>
     <div class="playground"></div>
   </div>
+
+  <div class="container">
+    <table class='users-table table table text-center'>  
+      <tr style='background-color:gainsboro'>
+        <th style='width: 10%'></th>
+        <th> Nick </th>
+        <th style='width: 50%'> Dodaj/Usuń lidera </th>
+      </tr>
+      <tr>
+        <td> X </td>
+        <td> Airi </td>
+        <td> 
+          <button class="btn btn-success">
+            Dodaj
+          </button>
+          <button class="btn btn-danger">
+            Usuń
+          </button>
+        </td>
+      </tr>  
+    </table>
+    
+    <form>
+      <div class="user-form form-row align-items-center justify-content-md-center">
+        <div class="col-auto">
+          <input type="text" class="form-control mb-2" id="inlineFormInput" placeholder="Nowy nick">
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary mb-2">Zmień</button>
+        </div>
+      </div>
+    </form>  
+  </div>      
 
   <!-- Bootstrap core JavaScript -->
   <script src="vendor/jquery/jquery.slim.min.js"></script>
