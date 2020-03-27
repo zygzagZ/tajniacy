@@ -5,7 +5,6 @@ const postcss = require('gulp-postcss')
 const autoprefixer = require('autoprefixer')
 const sourcemaps = require('gulp-sourcemaps')
 const cssnano = require('cssnano')
-const gutil = require('gulp-util')
 const rename = require('gulp-rename')
 const browsersync = require('browser-sync').create()
 const plumber = require('gulp-plumber')
@@ -20,7 +19,7 @@ function clean() {
 }
 
 function css() {
-  const plugins = [autoprefixer({ browsers: ['last 2 versions'] }), cssnano()]
+  const plugins = [autoprefixer(), cssnano()]
 
   return merge(
     gulp.src('./app/scss/**/*.scss')
@@ -82,7 +81,6 @@ function resources() {
 }
 
 const onError = (err) => {
-  gutil.beep()
   console.log(err)
 }
 
