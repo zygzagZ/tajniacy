@@ -109,7 +109,8 @@ function browserSync() {
   browsersync.init(null, {
     proxy: 'http://localhost:3000',
     files: ['./dist/app/**/*.*'],
-    port: 7000
+    port: 7000,
+    ws: true
   })
 }
 
