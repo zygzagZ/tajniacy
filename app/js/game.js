@@ -35,7 +35,7 @@ function setState(newState) {
       <td> ${e.leader ? '<img class="image-crown" src="static/images/crown.jpg">' : ''} </td> 
       <td> ${e.nick} </td>
       <td class="leader-only">
-        <button class="btn btn-${e.leader ? 'danger' : 'success'} toggle-leader" data-leader="${e.leader}">${e.leader ? '-' : '+'}</button>
+        <button class="btn btn-${e.leader ? 'danger' : 'success'} toggle-leader" data-leader="${!!e.leader}">${e.leader ? '-' : '+'}</button>
       </td>
     </tr>`).join(''))
 
