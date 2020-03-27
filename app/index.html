@@ -29,50 +29,43 @@
   <div class="container">
     <div class="row justify-content-md-center mt-3 text-center">
       <div>
-        <button class="btn btn-primary reset-game" style="display: none"> Wylosuj nową grę </button>
+        <button class="btn btn-primary reset-game leader-only" style="display: none"> Wylosuj nową grę </button>
       </div>
     </div>
     <div class="playground"></div>
   </div>
 
   <div class="container">
-    <table class='users-table table table text-center'>  
+    <table class='users-table table table text-center' style="display: none">
+      <thead>
       <tr>
         <th style='width: 10%'></th>
         <th> Nick </th>
-        <th style='width: 50%'> Dodaj/Usuń lidera </th>
+        <th style='width: 20%' class="leader-only"> Dodaj/Usuń lidera </th>
       </tr>
+      </thead>
+      <tbody>
       <tr>
-        <td> <image class='image-crown' src="static/images/crown.jpg"> </td>
+        <td> <img class='image-crown' src="static/images/crown.jpg"> </td>
         <td> Airi </td>
-        <td> 
-          <button class="btn btn-danger">
-            X
-          </button>
+        <td class="leader-only">
+          <button class="btn btn-danger">X</button>
         </td>
       </tr>
-      <tr>
-        <td> </td>
-        <td> ZygzagZ </td>
-        <td> 
-          <button class="btn btn-success">
-            +
-          </button>
-        </td>
-      </tr>    
+      </tbody>
     </table>
-    
-    <form>
-      <div class="user-form form-row align-items-center justify-content-md-center">
+
+    <form class="user-form">
+      <div class="form-row align-items-center justify-content-md-center">
         <div class="col-auto">
-          <input type="text" class="form-control mb-2" id="inlineFormInput" placeholder="Nowy nick">
+          <input type="text" class="form-control mb-2" id="user_nick" placeholder="Ustaw nick">
         </div>
         <div class="col-auto">
           <button type="submit" class="btn btn-primary mb-2">Zmień</button>
         </div>
       </div>
-    </form>  
-  </div>      
+    </form>
+  </div>
 
   <!-- Bootstrap core JavaScript -->
   <script src="vendor/jquery/jquery.slim.min.js"></script>

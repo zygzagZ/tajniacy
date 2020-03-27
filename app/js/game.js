@@ -9,6 +9,11 @@ function setState(newState) {
   console.log('setState', JSON.stringify(newState))
   state = newState
 
+  if (state.error) {
+    alert(state.error)
+    delete state.error
+  }
+
   if (!state.map) return
 
   $('.card').each((i, e) => {
@@ -25,8 +30,27 @@ function setState(newState) {
     if (tile.clicked) { el.addClass('clicked') } else { el.removeClass('clicked') }
   })
 
-  if (state.leader) $('.reset-game').show()
-  else $('.reset-game').hide()
+  const ut = $('.users-table').show()
+  $('tbody', ut).html(state.members.map((e) => `<tr>
+      <td> ${e.leader ? '<img class="image-crown" src="static/images/crown.jpg">' : ''} </td> 
+      <td> ${e.nick} </td>
+      <td class="leader-only">
+        <button class="btn btn-${e.leader ? 'danger' : 'success'} toggle-leader" data-leader="${e.leader}">${e.leader ? '-' : '+'}</button>
+      </td>
+    </tr>`).join(''))
+
+  $('.toggle-leader').click(function (el) {
+    ws.sendJSON({
+      type: $(this).data('leader') ? 'removeLeader' : 'addLeader',
+      nick: $(this).parent().prev().text().trim()
+    })
+  })
+
+  if (state.leader) {
+    $('.leader-only').show()
+  } else {
+    $('.leader-only').hide()
+  }
 }
 
 function extend(source, target) {
@@ -45,9 +69,15 @@ function updateState(changes) {
   setState(extend(state, changes))
 }
 
+let ws = null
+
 let state = {}
 
-$(function () {
+function setNick(nick) {
+  ws.sendJSON({ type: 'setNick', nick: nick })
+}
+
+function joinRoom(nick) {
   for (let i = 0; i < 5; i++) $('.playground').append('<div class="row">')
   for (let i = 0; i < 5; i++) $('.playground .row').append('<div class="card col">')
 
@@ -65,15 +95,7 @@ $(function () {
     ws.sendJSON({ type: 'restart' })
   })
 
-  $('.toggle-visibility').click(function () {
-    $('.playground').toggleClass('leader')
-  })
-
-  $('#link').on('click', function () {
-    this.setSelectionRange(0, this.value.length)
-  })
-
-  const ws = new WebSocket(document.location.href.replace(/^http/, 'ws'))
+  ws = new WebSocket(document.location.href.replace(/^http/, 'ws'))
 
   ws.onerror = (e) => {
     console.error(e)
@@ -85,7 +107,7 @@ $(function () {
     updateState(data)
   }
 
-  ws.onopen = (e) => console.log('open', e)
+  ws.onopen = (e) => setNick(nick)
 
   ws.onclose = (e) => console.log('close', e)
 
@@ -93,4 +115,17 @@ $(function () {
     console.log('>>>', data)
     ws.send(JSON.stringify(data))
   }
+}
+
+$(function () {
+  $('.user-form').on('submit', function (ev) {
+    ev.preventDefault()
+    const nick = $('#user_nick').val().trim()
+    if (!ws) {
+      joinRoom(nick)
+    } else {
+      setNick(nick)
+    }
+    return false
+  })
 })

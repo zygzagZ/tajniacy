@@ -52,7 +52,16 @@ export default class Room {
       clicked: false
     }))
 
-    this.members.forEach((socket) => this.sendMap(socket))
+    this.getMemberSockets().forEach((socket) => this.sendMap(socket))
+  }
+
+  broadcastMembers() {
+    return this.broadcast({
+      members: this.members.map((e) => ({
+        nick: e.nick,
+        leader: e.leader || undefined
+      }))
+    })
   }
 
   sendMap(socket) {
@@ -71,6 +80,7 @@ export default class Room {
     socket.leader = true
     this.leaders.push(socket)
     socket.sendJSON({ leader: true })
+    this.broadcastMembers()
   }
 
   removeLeader(socket) {
@@ -78,22 +88,38 @@ export default class Room {
     this.leaders = this.leaders.filter((e) => e !== socket)
     socket.leader = false
     socket.sendJSON({ leader: false })
+    this.broadcastMembers()
   }
 
-  addMember(socket) {
-    console.log(this.id, 'addMember')
-    if (this.members.indexOf(socket) < 0) {
+  getMemberSockets() {
+    return this.members
+  }
+
+  addMember(socket, nick) {
+    console.log(this.id, 'addMember', socket.nick)
+    socket.member = true
+
+    if (!this.findMember(socket)) {
       this.members.push(socket)
+      this.setNick(socket, nick)
     }
+
     if (this.members.length === 1) {
       this.addLeader(socket)
     }
+
+    this.broadcastMembers()
     this.sendMap(socket)
     socket.sendJSON({ leader: socket.leader })
   }
 
+  findMember(q) {
+    return this.members.filter((e) => e === q || e.nick === q)[0]
+  }
+
   removeMember(socket) {
     this.members = this.members.filter((e) => e !== socket)
+    this.broadcastMembers()
   }
 
   clickTile(tileIndex) {
@@ -104,24 +130,41 @@ export default class Room {
   }
 
   broadcast(data) {
-    this.members.forEach((socket) => socket.sendJSON(data))
+    this.members.forEach((e) => e.sendJSON(data))
+  }
+
+  setNick(socket, nick) {
+    socket.nick = nick
   }
 
   onMessage(socket, msg) {
-    console.log(this.id, 'onMessage', msg, 'leader?', socket.leader)
+    console.log(this.id, 'onMessage', msg, 'leader?', socket.leader, socket.nick)
     switch (msg.type) {
-      case 'setNick':
-        this.setNick(socket, msg.nick)
+      case 'setNick': {
+        let nick = msg.nick && typeof msg.nick === 'string' && msg.nick.match(/^[A-Ża-ż0-9 _!]+$/)
+        nick = nick && nick[0].trim()
+        if (!nick) {
+          socket.sendJSON({ error: 'Niepoprawny nick!' })
+          return
+        }
+
+        if (!socket.member) this.addMember(socket, nick)
+        else this.setNick(socket, nick)
         break
+      }
       default:
         if (!socket.leader) return
         switch (msg.type) {
-          case 'addLeader':
-            this.addLeader(this.findByNick(msg.nick))
+          case 'addLeader': {
+            const member = this.findMember(msg.nick)
+            if (member) this.addLeader(member)
             break
-          case 'removeLeader':
-            this.removeLeader(this.findByNick(msg.nick))
+          }
+          case 'removeLeader': {
+            const member = this.findMember(msg.nick)
+            if (member) this.removeLeader(member)
             break
+          }
           case 'restart':
             this.restart()
             break
@@ -132,16 +175,18 @@ export default class Room {
   }
 
   onSocket(socket) {
-    socket.on('message', (data) => {
+    socket.sendJSON = (data) => socket.send(JSON.stringify(data))
+    socket.on('message', (json) => {
       try {
-        this.onMessage(socket, JSON.parse(data))
+        const data = JSON.parse(json)
+        if (data.type === 'setNick' || socket.member) {
+          this.onMessage(socket, data)
+        }
       } catch (err) {
-        console.error(err, data)
+        console.error(err, json)
       }
     })
     socket.on('close', (e) => this.removeMember(socket))
     socket.on('error', (e) => console.log('error', e))
-    socket.sendJSON = (data) => socket.send(JSON.stringify(data))
-    this.addMember(socket)
   }
 }
