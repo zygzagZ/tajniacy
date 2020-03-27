@@ -29,7 +29,7 @@ app.get('/', (req, res) => {
 
   rooms[room.id] = room
 
-  room.closeTimeout = setTimeout(deleteRoom, 5 * 1000, room.id)
+  room.closeTimeout = setTimeout(deleteRoom, 5 * 60 * 1000, room.id)
 
   res.redirect(302, `/${room.id}`)
 })
