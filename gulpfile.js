@@ -103,7 +103,7 @@ async function watch() {
 
 async function browserSync() {
   browsersync.init(null, {
-    proxy: 'http://localhost:3000',
+    proxy: 'http://localhost:' + (process.env.PORT || 3000),
     files: ['./dist/app/**/*.*'],
     port: 7000,
     ws: true
