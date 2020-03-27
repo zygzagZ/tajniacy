@@ -17,15 +17,15 @@ export default class Room {
   // dictionary
 
   constructor(dictionary, kind) {
-    this.id = crypto.randomBytes(16).toString('hex')
+    this.id = crypto.randomBytes(12).toString('base64')
     this.dictionary = dictionary
     this.members = []
     this.leaders = []
     this.map = []
 
+    console.log(this.id, 'created')
     this.setKind(kind)
     this.restart()
-    console.log('new room', this.id)
   }
 
   setKind(kind) {
@@ -34,7 +34,7 @@ export default class Room {
   }
 
   restart() {
-    console.log('restart!')
+    console.log(this.id, 'restart')
     const words = shuffle([...this.dictionary[this.kind]]).slice(0, 25)
     const first = shuffle(['red', 'blue'])[0]
 
@@ -80,7 +80,7 @@ export default class Room {
   }
 
   addMember(socket) {
-    console.log('addMember')
+    console.log(this.id, 'addMember')
     if (this.members.indexOf(socket) < 0) {
       this.members.push(socket)
     }
@@ -107,7 +107,7 @@ export default class Room {
   }
 
   onMessage(socket, msg) {
-    console.log('onMessage', msg, 'leader?', socket.leader)
+    console.log(this.id, 'onMessage', msg, 'leader?', socket.leader)
     switch (msg.type) {
       case 'setNick':
         this.setNick(socket, msg.nick)
@@ -140,7 +140,6 @@ export default class Room {
     })
     socket.on('close', (e) => this.removeMember(socket))
     socket.on('error', (e) => console.log('error', e))
-    socket.on('open', (e) => console.log('open', e))
     socket.sendJSON = (data) => socket.send(JSON.stringify(data))
     this.addMember(socket)
   }

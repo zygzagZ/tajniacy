@@ -31,8 +31,6 @@ app.get('/', (req, res) => {
 
   room.closeTimeout = setTimeout(deleteRoom, 5 * 1000, room.id)
 
-  console.log('Nowy pokoj', room.id)
-
   res.redirect(302, `/${room.id}`)
 })
 

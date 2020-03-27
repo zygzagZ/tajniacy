@@ -84,18 +84,10 @@ const onError = (err) => {
   console.log(err)
 }
 
-function run(cb) {
-  var started = false
+function run() {
   return nodemon({
     script: './dist/server/main.js'
-  }).on('start', function () {
-    // to avoid nodemon being started multiple times
-    // thanks @matthisk
-    if (!started) {
-      cb()
-      started = true
-    }
-  })
+  }).on('start', browsersync.reload)
 }
 
 function watch() {
