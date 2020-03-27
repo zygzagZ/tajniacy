@@ -62,12 +62,11 @@
 }
 
 .users-table {
-	height: 5px;
-}
-
-.users-table {
 	width: 50%;
 	margin-left: 25%;
 	margin-top: 5%;
 }
 
+.image-crown {
+	max-width: 1.5em;
+}
