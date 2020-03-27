@@ -107,7 +107,10 @@ function joinRoom(nick) {
     updateState(data)
   }
 
-  ws.onopen = (e) => setNick(nick)
+  ws.onopen = (e) => {
+    setNick(nick)
+    setInterval(() => ws.sendJSON({ type: 'ping' }), 10000)
+  }
 
   ws.onclose = (e) => console.log('close', e)
 
