@@ -143,6 +143,9 @@ export default class Room {
   onMessage(socket, msg) {
     console.log(this.id, 'onMessage', msg, 'leader?', socket.leader, socket.nick)
     switch (msg.type) {
+      case 'ping':
+        socket.sendJSON({ pong: 1 })
+        break
       case 'setNick': {
         let nick = msg.nick && typeof msg.nick === 'string' && msg.nick.match(/^[A-Ża-ż0-9 _!]+$/)
         nick = nick && nick[0].trim()

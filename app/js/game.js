@@ -78,6 +78,7 @@ function setNick(nick) {
 }
 
 function joinRoom(nick) {
+  $('.playground').html('')
   for (let i = 0; i < 5; i++) $('.playground').append('<div class="row">')
   for (let i = 0; i < 5; i++) $('.playground .row').append('<div class="card col">')
 
@@ -97,22 +98,39 @@ function joinRoom(nick) {
 
   ws = new WebSocket(document.location.href.replace(/^http/, 'ws'))
 
+  let pingInterval = null
+  let lastPing = Date.now()
+
   ws.onerror = (e) => {
     console.error(e)
-    // alert(e)
+    clearInterval(pingInterval)
+    if (state.map) {
+      state.map.forEach((e) => {
+        e.word = ''
+      })
+    }
   }
 
   ws.onmessage = (e) => {
     const data = JSON.parse(e.data)
+    if (data.pong) {
+      $('.ping').text(`Ping: ${Date.now() - lastPing} ms`)
+    }
     updateState(data)
   }
 
   ws.onopen = (e) => {
     setNick(nick)
-    setInterval(() => ws.sendJSON({ type: 'ping' }), 10000)
+    pingInterval = setInterval(() => {
+      lastPing = Date.now()
+      ws.sendJSON({ type: 'ping' })
+    }, 1000)
   }
 
-  ws.onclose = (e) => console.log('close', e)
+  ws.onclose = (e) => {
+    clearInterval(pingInterval)
+    joinRoom(nick)
+  }
 
   ws.sendJSON = (data) => {
     console.log('>>>', data)
