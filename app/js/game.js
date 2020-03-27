@@ -25,8 +25,8 @@ function setState(newState) {
     if (tile.clicked) { el.addClass('clicked') } else { el.removeClass('clicked') }
   })
 
-  if (state.leader) $('.new-game').show()
-  else $('.new-game').hide()
+  if (state.leader) $('.reset-game').show()
+  else $('.reset-game').hide()
 }
 
 function extend(source, target) {
@@ -61,7 +61,7 @@ $(function () {
       ws.sendJSON({ type: 'click', tile: i })
     })
 
-  $('.new-game').click(function () {
+  $('.reset-game').click(function () {
     ws.sendJSON({ type: 'restart' })
   })
 

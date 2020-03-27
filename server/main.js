@@ -18,33 +18,56 @@ app.get('/dictionary.json', (res, req) => {
   req.send(dictionaryNames)
 })
 
-function getRoom(id) {
-  let room = rooms[id]
-  if (!room) {
-    room = new Room(dictionary, dictionaryNames[0])
-    rooms[room.id] = room
-  }
-  return room
+function deleteRoom(id) {
+  console.log('Usuwanie pokoju', id)
+  delete rooms[id]
 }
 
-app.get('/:id?', (req, res) => {
-  const id = req.params.id
-  const room = getRoom(req.params.id)
-  if (room.id !== id) return res.redirect(301, `/${room.id}`)
-  res.sendFile('index.html', { root: dir })
-})
+app.get('/', (req, res) => {
+  const room = new Room(dictionary, dictionaryNames[0])
+  if (rooms[room.id]) return res.send(500, 'Failed to create room')
 
-app.ws('/:id', (ws, req) => {
-  const room = getRoom(req.params.id)
+  rooms[room.id] = room
 
-  room.onSocket(ws)
-  ws.on('close', (e) => {
-    if (room.members.length !== 0) return
-    console.log('deleting room', room.id)
-    delete rooms[room.id]
-  })
+  room.closeTimeout = setTimeout(deleteRoom, 5 * 1000, room.id)
+
+  console.log('Nowy pokoj', room.id)
+
+  res.redirect(302, `/${room.id}`)
 })
 
 app.use(expressStatic)
 
-app.listen(3000, () => console.log('listening', 3000))
+app.get('/:id', (req, res) => {
+  if (!rooms[req.params.id]) {
+    console.log('404 nie ma pokoju', req.params.id)
+    return res.redirect(302, '/404.html')
+  }
+  res.sendFile('index.html', { root: dir })
+})
+
+app.ws('/:id', (ws, req) => {
+  const room = rooms[req.params.id]
+  if (!room) {
+    console.log('[WS] 404 nie ma pokoju', req.params.id)
+    return ws.close()
+  }
+
+  console.log('ws connected', room.id)
+
+  if (room.closeTimeout) {
+    console.log('Pokoj jednak uzywany!', room.id)
+    clearTimeout(room.closeTimeout)
+  }
+
+  room.onSocket(ws)
+  ws.on('close', (e) => {
+    if (room.members.length !== 0) return
+    console.log('Pokój przygotowany do usunięcia za 5 minut', room.id)
+    room.closeTimeout = setTimeout(deleteRoom, 5 * 60 * 1000, room.id)
+  })
+})
+
+const port = process.env.PORT || 3000
+
+app.listen(port, () => console.log('Listening on port', port))
