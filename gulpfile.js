@@ -21,10 +21,8 @@ function clean() {
 function css() {
   const plugins = [autoprefixer(), cssnano()]
 
-  return merge(
-    gulp.src('./app/scss/**/*.scss')
-      .pipe(sass().on('error', sass.logError)),
-    gulp.src('./app/css/**/*.css'))
+  return gulp.src(['./app/scss/**/*.scss', './app/css/**/*.css'])
+    .pipe(sass().on('error', sass.logError))
     .pipe(postcss(plugins))
     .pipe(rename({ suffix: '.min' }))
     .pipe(gulp.dest('./dist/app/css'))
@@ -63,9 +61,12 @@ function scripts() {
           presets: ['@babel/preset-env']
         }))
         .pipe(sourcemaps.write('.')),
+
       gulp.src(`./${el}/**/*.json`))
       .pipe(gulp.dest(`./dist/${el}/`))
   })
+
+  // TODO: Po zmianie skryptu w game.js restartuje się serwer
 
   return merge(bootstrap, jquery, others)
 }
@@ -84,20 +85,23 @@ const onError = (err) => {
   console.log(err)
 }
 
-function run() {
+function run(cb) {
   return nodemon({
     script: './dist/server/main.js'
-  }).on('start', browsersync.reload)
+  }).on('start', () => {
+    browsersync.reload()
+    cb()
+  })
 }
 
-function watch() {
+async function watch() {
   gulp.watch('./dist/app/**/*').on('change', browsersync.reload)
   gulp.watch(['./app/*.html', './app/static/**/*']).on('change', resources)
   gulp.watch('./app/css/**/*', css)
   gulp.watch(['./app/js/**/*.js', './server/**/*'], js)
 }
 
-function browserSync() {
+async function browserSync() {
   browsersync.init(null, {
     proxy: 'http://localhost:3000',
     files: ['./dist/app/**/*.*'],
@@ -119,5 +123,5 @@ module.exports = {
   scripts,
   scriptsLint,
   build,
-  default: gulp.series(build, gulp.parallel(watch, browserSync, run))
+  default: gulp.series(build, watch, run, browserSync)
 }

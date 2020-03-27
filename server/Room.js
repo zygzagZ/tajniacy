@@ -18,6 +18,7 @@ export default class Room {
 
   constructor(dictionary, kind) {
     this.id = crypto.randomBytes(12).toString('base64')
+      .replace(/\+/g, '-').replace(/\//g, '_') // url safe
     this.dictionary = dictionary
     this.members = []
     this.leaders = []
