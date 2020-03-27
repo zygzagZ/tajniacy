@@ -59,7 +59,7 @@ export default class Room {
     return this.broadcast({
       members: this.members.map((e) => ({
         nick: e.nick,
-        leader: e.leader || undefined
+        leader: e.leader
       }))
     })
   }
@@ -80,6 +80,7 @@ export default class Room {
     socket.leader = true
     this.leaders.push(socket)
     socket.sendJSON({ leader: true })
+    this.sendMap(socket)
     this.broadcastMembers()
   }
 
@@ -89,6 +90,7 @@ export default class Room {
     socket.leader = false
     socket.sendJSON({ leader: false })
     this.broadcastMembers()
+    this.sendMap(socket)
   }
 
   getMemberSockets() {
