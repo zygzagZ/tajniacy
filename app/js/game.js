@@ -11,7 +11,7 @@ function extend(source, target) {
     if (typeof target[i] === 'object' && typeof source[i] === 'object') { // array or object
       extend(source[i], target[i])
       if (target[i] instanceof Array && source[i] instanceof Array) {
-        target[i].length = source[i].length
+        source[i].length = target[i].length
       }
     } else {
       source[i] = target[i]
