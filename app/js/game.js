@@ -23,6 +23,11 @@ function extend(source, target) {
 function updateState(changes) {
   if (changes.error) alert(changes.error)
   if (changes.clearHint) $('.hint-form input[name=hint]').val('')
+  if (changes.firstColor) {
+    $('.firstColor')
+      .text(`Zaczyna zespół ${changes.firstColor === 'red' ? 'czerwony' : 'niebieski'}.`)
+      .css('color', changes.firstColor === 'red' ? 'lightcoral' : 'lightblue')
+  }
 
   extend(state, changes)
 
@@ -76,7 +81,7 @@ function updateState(changes) {
   if (changes.hints) {
     const wt = $('.hints-table').show()
     $('tbody', wt).html(state.hints.map((e) => `<tr>
-          <td class="${e.color}"> ${e.word} </td>
+          <td class="${e.color}"> ${e.hint} </td>
         </tr>`).join(''))
   }
 
@@ -150,10 +155,13 @@ function joinRoom(nick) {
   ws.onopen = (e) => {
     if (state.token) ws.sendJSON({ type: 'authorize', token: state.token })
     else setNick(nick)
-    pingInterval = setInterval(() => {
+
+    const ping = () => {
       lastPing = Date.now()
       ws.sendJSON({ type: 'ping' })
-    }, 10000)
+    }
+    pingInterval = setInterval(ping, 10000)
+    ping()
   }
 
   ws.onclose = (e) => {

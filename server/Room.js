@@ -21,6 +21,7 @@ export default class Room {
   // id = null
   // kind = null
   // dictionary
+  // firstColor
 
   constructor(dictionary, kind) {
     this.id = randomBase64(12)
@@ -43,9 +44,9 @@ export default class Room {
   restart() {
     console.log(this.id, 'restart')
     const words = shuffle([...this.dictionary[this.kind]]).slice(0, 25)
-    const first = shuffle(['red', 'blue'])[0]
+    this.firstColor = shuffle(['red', 'blue'])[0]
 
-    const colors = [first]
+    const colors = [this.firstColor]
     for (var color in counts) {
       colors.push(...new Array(counts[color]).fill(color))
     }
@@ -58,7 +59,14 @@ export default class Room {
       clicked: false
     }))
 
+    this.hints = []
+
     this.getMemberSockets().forEach((socket) => this.sendMap(socket))
+    this.broadcast({ firstColor: this.firstColor, hints: [] })
+  }
+
+  broadcast(data) {
+    this.members.forEach((e) => e.sendJSON(data))
   }
 
   broadcastMembers() {
@@ -80,6 +88,17 @@ export default class Room {
       }))
     }
     socket.sendJSON(view)
+  }
+
+  authorize(socket, token) {
+    const auth = this.auth[token]
+    if (!auth) return
+    socket.color = auth.color
+    socket.nick = auth.nick
+    socket.authorized = true
+    if (auth.leader) this.addLeader(socket, false)
+    delete this.auth[token]
+    return true
   }
 
   addLeader(socket, broadcast = true) {
@@ -105,6 +124,10 @@ export default class Room {
     return this.members
   }
 
+  findMember(q) {
+    return this.members.filter((e) => e === q || e.nick === q)[0]
+  }
+
   addMember(socket, nick) {
     socket.member = true
     if (!socket.authorized) {
@@ -124,13 +147,14 @@ export default class Room {
       // addLeader calls them by itself
       this.sendMap(socket)
     }
-    if (!socket.leader) socket.sendJSON({ leader: false })
-    this.sendToken(socket)
-    this.broadcastMembers()
-  }
 
-  findMember(q) {
-    return this.members.filter((e) => e === q || e.nick === q)[0]
+    socket.token = randomBase64(24)
+    socket.sendJSON({
+      leader: socket.leader,
+      token: socket.token,
+      firstColor: this.firstColor
+    })
+    this.broadcastMembers()
   }
 
   removeMember(socket) {
@@ -147,10 +171,6 @@ export default class Room {
     this.broadcast({ map: { [tileIndex]: { clicked: true, color: tile.color } } })
   }
 
-  broadcast(data) {
-    this.members.forEach((e) => e.sendJSON(data))
-  }
-
   setNick(socket, nick, broadcast = true) {
     socket.nick = nick
     if (broadcast) this.broadcastMembers()
@@ -161,20 +181,15 @@ export default class Room {
     this.broadcastMembers()
   }
 
-  authorize(socket, token) {
-    const auth = this.auth[token]
-    if (!auth) return
-    socket.color = auth.color
-    socket.nick = auth.nick
-    socket.authorized = true
-    if (auth.leader) this.addLeader(socket, false)
-    delete this.auth[token]
-    return true
-  }
-
-  sendToken(socket) {
-    if (!socket.token) socket.token = randomBase64(24)
-    socket.sendJSON({ token: socket.token })
+  addHint(socket, hint) {
+    if (this.hints.length
+      ? this.hints[0].color === socket.color
+      : this.firstColor !== socket.color) {
+      return
+    }
+    this.hints.unshift({ color: socket.color, hint })
+    this.broadcast({ hints: this.hints })
+    socket.sendJSON({ clearHint: true })
   }
 
   onMessage(socket, msg) {
@@ -186,7 +201,7 @@ export default class Room {
       if (!socket.member) this.addMember(socket, nick)
       else this.setNick(socket, nick)
     } else if (msg.type === 'authorize') {
-      if (!this.authorize(socket, msg.token)) {
+      if (typeof msg.token !== 'string' || !this.authorize(socket, msg.token)) {
         socket.sendJSON({ error: 'Autoryzacja nieudana!' })
         socket.close()
         return
@@ -194,23 +209,25 @@ export default class Room {
       this.addMember(socket, socket.nick)
     } else if (!socket.member) {
       // remaining opcodes only for room members
-    } else if (msg.type === 'getToken') {
-      this.sendToken(socket)
+    } else if (msg.type === 'ping') {
+      socket.sendJSON({ pong: 1 })
     } else if (!socket.leader) {
       // remaining opcodes only for room leaders
-    } else if (msg.type === 'addLeader') {
+    } else if (msg.type === 'addLeader' && typeof msg.nick === 'string') {
       const member = this.findMember(msg.nick)
       if (member) this.addLeader(member)
-    } else if (msg.type === 'removeLeader') {
+    } else if (msg.type === 'removeLeader' && typeof msg.nick === 'string') {
       const member = this.findMember(msg.nick)
       if (member) this.removeLeader(member)
-    } else if (msg.type === 'switchColor') {
+    } else if (msg.type === 'switchColor' && typeof msg.nick === 'string') {
       const member = this.findMember(msg.nick)
       if (member) this.switchColor(member)
     } else if (msg.type === 'restart') {
       this.restart()
-    } else if (msg.type === 'click') {
+    } else if (msg.type === 'click' && typeof msg.tile === 'number') {
       this.clickTile(msg.tile)
+    } else if (msg.type === 'addHint' && typeof msg.hint === 'string') {
+      this.addHint(socket, msg.hint.trim())
     }
   }
 

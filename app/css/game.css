@@ -93,3 +93,11 @@
 .btn.toggle-leader {
     width: 2.4em;
 }
+
+.hints-table td.red {
+    color: red;
+}
+
+.hints-table td.blue {
+    color: blue;
+}
