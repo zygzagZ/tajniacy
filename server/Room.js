@@ -8,21 +8,27 @@ const counts = {
   grey: 7
 }
 
+function randomBase64(len) {
+  return crypto.randomBytes(12).toString('base64')
+    .replace(/\+/g, '-').replace(/\//g, '_') // url safe
+}
+
 export default class Room {
   // members = []
   // leaders = []
+  // auth = {}
   // map = []
   // id = null
   // kind = null
   // dictionary
 
   constructor(dictionary, kind) {
-    this.id = crypto.randomBytes(12).toString('base64')
-      .replace(/\+/g, '-').replace(/\//g, '_') // url safe
+    this.id = randomBase64(12)
     this.dictionary = dictionary
     this.members = []
     this.leaders = []
     this.map = []
+    this.auth = {}
 
     console.log(this.id, 'created')
     this.setKind(kind)
@@ -75,18 +81,19 @@ export default class Room {
     socket.sendJSON(view)
   }
 
-  addLeader(socket) {
+  addLeader(socket, broadcast = true) {
     if (socket.leader) return
     socket.leader = true
     this.leaders.push(socket)
     socket.sendJSON({ leader: true })
     this.sendMap(socket)
-    this.broadcastMembers()
+    if (broadcast) this.broadcastMembers()
   }
 
   removeLeader(socket) {
     if (!socket.leader) return
     this.leaders = this.leaders.filter((e) => e !== socket)
+    if (!this.leaders.length && this.members.length) this.addLeader(this.members[0])
     socket.leader = false
     socket.sendJSON({ leader: false })
     this.broadcastMembers()
@@ -98,21 +105,27 @@ export default class Room {
   }
 
   addMember(socket, nick) {
-    console.log(this.id, 'addMember', socket.nick)
     socket.member = true
+    if (!socket.authorized) {
+      socket.leader = false
+      socket.color = shuffle(['red', 'blue'])[0]
+    }
 
     if (!this.findMember(socket)) {
       this.members.push(socket)
-      this.setNick(socket, nick)
+      // do not broadcast setNick, we will send them later
+      this.setNick(socket, nick, false)
     }
 
     if (this.members.length === 1) {
-      this.addLeader(socket)
+      this.addLeader(socket, false)
+    } else {
+      // addLeader calls them by itself
+      this.sendMap(socket)
     }
-
+    if (!socket.leader) socket.sendJSON({ leader: false })
+    this.sendToken(socket)
     this.broadcastMembers()
-    this.sendMap(socket)
-    socket.sendJSON({ leader: socket.leader })
   }
 
   findMember(q) {
@@ -120,8 +133,10 @@ export default class Room {
   }
 
   removeMember(socket) {
+    this.auth[socket.token] = { leader: socket.leader, color: socket.color, nick: socket.nick }
     this.members = this.members.filter((e) => e !== socket)
-    this.broadcastMembers()
+    if (socket.leader) this.removeLeader(socket)
+    else this.broadcastMembers()
   }
 
   clickTile(tileIndex) {
@@ -135,59 +150,73 @@ export default class Room {
     this.members.forEach((e) => e.sendJSON(data))
   }
 
-  setNick(socket, nick) {
+  setNick(socket, nick, broadcast = true) {
     socket.nick = nick
-    this.broadcastMembers()
+    if (broadcast) this.broadcastMembers()
+  }
+
+  switchColor(socket, color) {
+    socket.color = socket.color === 'red' ? 'blue' : 'red'
+  }
+
+  authorize(socket, token) {
+    const auth = this.auth[token]
+    if (!auth) return
+    socket.color = auth.color
+    socket.nick = auth.nick
+    socket.authorized = true
+    if (auth.leader) this.addLeader(socket, false)
+    delete this.auth[token]
+    return true
+  }
+
+  sendToken(socket) {
+    if (!socket.token) socket.token = randomBase64(24)
+    socket.sendJSON({ token: socket.token })
   }
 
   onMessage(socket, msg) {
-    console.log(this.id, 'onMessage', msg, 'leader?', socket.leader, socket.nick)
-    switch (msg.type) {
-      case 'ping':
-        socket.sendJSON({ pong: 1 })
-        break
-      case 'setNick': {
-        let nick = msg.nick && typeof msg.nick === 'string' && msg.nick.match(/^[A-Ża-ż0-9 _!]+$/)
-        nick = nick && nick[0].trim()
-        if (!nick) {
-          socket.sendJSON({ error: 'Niepoprawny nick!' })
-          return
-        }
+    if (msg.type === 'setNick') {
+      let nick = msg.nick && typeof msg.nick === 'string' && msg.nick.match(/^[A-Ża-ż0-9 _!]+$/)
+      nick = nick && nick[0].trim()
+      if (!nick) return socket.sendJSON({ error: 'Niepoprawny nick!' })
 
-        if (!socket.member) this.addMember(socket, nick)
-        else this.setNick(socket, nick)
-        break
+      if (!socket.member) this.addMember(socket, nick)
+      else this.setNick(socket, nick)
+    } else if (msg.type === 'authorize') {
+      if (!this.authorize(socket, msg.token)) {
+        socket.sendJSON({ error: 'Autoryzacja nieudana!' })
+        socket.close()
+        return
       }
-      default:
-        if (!socket.leader) return
-        switch (msg.type) {
-          case 'addLeader': {
-            const member = this.findMember(msg.nick)
-            if (member) this.addLeader(member)
-            break
-          }
-          case 'removeLeader': {
-            const member = this.findMember(msg.nick)
-            if (member) this.removeLeader(member)
-            break
-          }
-          case 'restart':
-            this.restart()
-            break
-          case 'click':
-            this.clickTile(msg.tile)
-        }
+      this.addMember(socket, socket.nick)
+    } else if (!socket.member) {
+      // remaining opcodes only for room members
+    } else if (msg.type === 'getToken') {
+      this.sendToken(socket)
+    } else if (!socket.leader) {
+      // remaining opcodes only for room leaders
+    } else if (msg.type === 'addLeader') {
+      const member = this.findMember(msg.nick)
+      if (member) this.addLeader(member)
+    } else if (msg.type === 'removeLeader') {
+      const member = this.findMember(msg.nick)
+      if (member) this.removeLeader(member)
+    } else if (msg.type === 'switchColor') {
+      const member = this.findMember(msg.nick)
+      if (member) this.switchColor(member)
+    } else if (msg.type === 'restart') {
+      this.restart()
+    } else if (msg.type === 'click') {
+      this.clickTile(msg.tile)
     }
   }
 
   onSocket(socket) {
-    socket.sendJSON = (data) => socket.send(JSON.stringify(data))
     socket.on('message', (json) => {
       try {
         const data = JSON.parse(json)
-        if (data.type === 'setNick' || socket.member) {
-          this.onMessage(socket, data)
-        }
+        this.onMessage(socket, data)
       } catch (err) {
         console.error(err, json)
       }

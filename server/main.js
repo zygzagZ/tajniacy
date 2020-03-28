@@ -46,7 +46,14 @@ app.get('/:id', (req, res) => {
 
 app.ws('/:id', (ws, req) => {
   const room = rooms[req.params.id]
+
+  ws.sendJSON = (data) => {
+    if (ws.readyState === ws.OPEN) { // socket is open
+      ws.send(JSON.stringify(data))
+    }
+  }
   if (!room) {
+    ws.sendJSON({ redirect: '/404.html' })
     console.log('[WS] 404 nie ma pokoju', req.params.id)
     return ws.close()
   }
@@ -56,6 +63,7 @@ app.ws('/:id', (ws, req) => {
   if (room.closeTimeout) {
     console.log('Pokoj jednak uzywany!', room.id)
     clearTimeout(room.closeTimeout)
+    room.closeTimeout = null
   }
 
   room.onSocket(ws)
