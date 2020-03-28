@@ -21,12 +21,10 @@ function extend(source, target) {
 }
 
 function updateState(changes) {
-  extend(state, changes)
+  if (changes.error) alert(changes.error)
+  if (changes.clearHint) $('.hint-form input[name=hint]').val('')
 
-  if (state.error) {
-    alert(state.error)
-    delete state.error
-  }
+  extend(state, changes)
 
   if (!state.map) return
 
@@ -49,23 +47,37 @@ function updateState(changes) {
   if (changes.members) {
     const ut = $('.users-table').show()
     $('tbody', ut).html(state.members.map((e) => `<tr>
-      <td> ${e.leader ? '<img class="image-crown" src="static/images/crown.jpg">' : ''} </td> 
+      <td> ${e.leader ? '<img alt="Leader" class="image-crown" src="static/images/crown.jpg">' : ''} </td> 
       <td>
-        <span class="dot"></span>
+        <div class="user-color ${e.color}"></div>
       </td>
-      <td style="text-align:left"> ${e.nick} <div class="user-color"></div></td>
+      <td class="nick"> ${e.nick} </td>
       <td class="leader-only">
         <button class="btn btn-${e.leader ? 'danger' : 'success'} toggle-leader" data-leader="${!!e.leader}">${e.leader ? '-' : '+'}</button>
       </td>
 
     </tr>`).join(''))
 
-    $('.toggle-leader').click(function (el) {
+    $('.toggle-leader', ut).click(function (el) {
       ws.sendJSON({
         type: $(this).data('leader') ? 'removeLeader' : 'addLeader',
-        nick: $(this).parent().prev().text().trim()
+        nick: $(this).closest('tr').find('.nick').text().trim()
       })
     })
+
+    $('.user-color', ut).click(function (el) {
+      ws.sendJSON({
+        type: 'switchColor',
+        nick: $(this).closest('tr').find('.nick').text().trim()
+      })
+    })
+  }
+
+  if (changes.hints) {
+    const wt = $('.hints-table').show()
+    $('tbody', wt).html(state.hints.map((e) => `<tr>
+          <td class="${e.color}"> ${e.word} </td>
+        </tr>`).join(''))
   }
 
   if (state.leader) {
@@ -81,6 +93,10 @@ const state = {}
 
 function setNick(nick) {
   ws.sendJSON({ type: 'setNick', nick: nick })
+}
+
+function addHint(hint) {
+  ws.sendJSON({ type: 'addHint', hint })
 }
 
 let lastJoin = 0
@@ -154,12 +170,20 @@ function joinRoom(nick) {
 $(function () {
   $('.user-form').on('submit', function (ev) {
     ev.preventDefault()
-    const nick = $('#user_nick').val().trim()
+    const nick = $('input[name=nick]', this).val().trim()
     if (!ws) {
       joinRoom(nick)
+      $('.member-only').show()
+      $('.pre-login').hide()
     } else {
       setNick(nick)
     }
-    return false
+  })
+
+  $('.hint-form').on('submit', function (ev) {
+    ev.preventDefault()
+    const hint = $('input[name=hint]', this)
+    if (!ws) return
+    addHint(hint.val().trim())
   })
 })

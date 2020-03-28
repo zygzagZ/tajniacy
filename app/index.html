@@ -20,7 +20,7 @@
 
   <!-- Navigation -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark static-top">
-    <div class="container justify-content-md-center">
+    <div class="container justify-content-center">
       <a class="navbar-brand " href="#">Tajniacy</a>
       <ul class="navbar-nav ml-auto">
         <li class="nav-item">
@@ -31,74 +31,81 @@
   </nav>
 
   <!-- Page Content -->
-  <div class="container">
-    <div class="row justify-content-md-center mt-3 text-center">
+  <div class="container member-only">
+    <div class="row justify-content-center mt-3 text-center">
       <div>
-        <button class="btn btn-primary reset-game leader-only" style="display: none"> Wylosuj nową grę </button>
+        <button class="btn btn-primary reset-game leader-only"> Wylosuj nową grę </button>
       </div>
     </div>
-    <div class="playground"></div>
+    <div class="row d-block playground"></div>
+    <div class="row">
+      <div class="col-md-5 offset-md-1 mt-5">
+        <table class="users-table table">
+          <thead>
+          <tr>
+            <th></th>
+            <th></th>
+            <th class="w-75"> Nick </th>
+            <th class="leader-only"> </th>
+          </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+
+        <form class="user-form">
+          <div class="form-row align-items-center justify-content-center">
+            <div class="col">
+              <input type="text" class="form-control" name="nick" placeholder="Ustaw nick">
+            </div>
+            <div class="col-auto">
+              <button type="submit" class="btn btn-primary">OK</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="col-md-4 offset-md-1 mt-5">
+        <table class="hints-table table text-center">
+          <thead>
+          <tr>
+            <th> Historia haseł </th>
+          </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+
+        <form class="hint-form leader-only">
+          <div class="form-row align-items-center justify-content-center">
+            <div class="col">
+              <input type="text" class="form-control" name="hint" placeholder="Nowe słowo">
+            </div>
+            <div class="col-auto">
+              <button type="submit" class="new-word-btn btn btn-primary">OK</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="row mt-5"></div>
   </div>
 
-  <div class="container">
-    <div class='row'>
-      <table class='users-table table text-center' style="display: none">
-        <thead>
-        <tr>
-          <th style="width: 5%"> </th>
-          <th style="width: 5%"></th>
-          <th style="text-align:left; width: auto"> Nick </th>
-          <th style="width: auto" class="leader-only"> Dodaj/Usuń lidera </th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-          <td> <img class='image-crown' src="static/images/crown.jpg"> </td>
-          <td> Airi </td>
-          <td class="leader-only">
-            <button class="btn btn-danger">X</button>
-          </td>
-
-        </tr>   
-        </tbody>
-      </table>
-
-      <table class='words-table table text-center' style="display:none">
-        <thead>
-        <tr>
-          <th> Historia haseł </th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-          <td style="color: blue; font-weight: bold"> Rozbój 5 </td>
-        </tr>
-        <tr>
-          <td style="color: red; font-weight: bold"> Rozbój 5 </td>
-        </tr>
-        <tr>
-          <td class='leader-only' style='display:none'> 
-            <input type='text' class='new-word-input' placeholder='Nowe słowo'>
-              <button type="submit" class="new-word-btn btn btn-primary mb-2">OK</button>
-          <td>
-        </tr>
-
-
-        </tbody>
-      </table>
-
-    </div>
-
-    <form class="user-form">
-      <div class="form-row align-items-center justify-content-md-center">
-        <div class="col-auto">
-          <input type="text" class="form-control mb-2" id="user_nick" placeholder="Ustaw nick">
-        </div>
-        <div class="col-auto">
-          <button type="submit" class="btn btn-primary mb-2">OK</button>
-        </div>
+  <div class="container pre-login">
+    <div class="row justify-content-center mt-3 text-center">
+      <div class="col">
+        <form class="user-form">
+          <div class="form-row align-items-center justify-content-center">
+            <div class="col-auto">
+              <input type="text" class="form-control" name="nick" placeholder="Ustaw nick">
+            </div>
+            <div class="col-auto">
+              <button type="submit" class="btn btn-primary">OK</button>
+            </div>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   </div>
 
   <!-- Bootstrap core JavaScript -->

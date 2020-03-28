@@ -65,7 +65,8 @@ export default class Room {
     return this.broadcast({
       members: this.members.map((e) => ({
         nick: e.nick,
-        leader: !!e.leader
+        leader: !!e.leader,
+        color: e.color
       }))
     })
   }
@@ -157,6 +158,7 @@ export default class Room {
 
   switchColor(socket, color) {
     socket.color = socket.color === 'red' ? 'blue' : 'red'
+    this.broadcastMembers()
   }
 
   authorize(socket, token) {

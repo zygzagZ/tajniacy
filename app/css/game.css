@@ -21,7 +21,7 @@
     background-color:white;
     padding: 0.8vh;
     font-size: 1.1vw;
-    border-radius: 1vw;
+    border-radius: 1em;
     font-weight: bold;
 
 }
@@ -61,43 +61,35 @@
 	background-color: #deb887;
 }
 
-.users-table {
-	width: 40%;
-	margin-top: 5%;
-	max-width: 400px;
-	margin-left: 5%;
-	margin-right: auto;
-}
-
-.words-table {
-	width: 30%;
-	margin-top: 5%;
-	margin-right: 5%;
-	max-width: 250px;
-}
-
-.row-tables {
-	width:100%;
-}
-
 .image-crown {
-	max-width: 1.5em;
+	width: 1.5em;
 }
 
-.dot {
-  height: 2.5vh;
-  width: 2.5vh;
-  background-color: blue;
-  border-radius: 50%;
-  display: inline-block;
+.user-color {
+    height: 1em;
+    width: 1em;
+    border-radius: 50%;
+    display: inline-block;
+    vertical-align: middle;
+    border: 1px solid black;
 }
 
-.new-word-btn {
-	max-width:25%; 
-	text-align: center
+.user-color.red {
+    background: red;
 }
 
-.new-word-input {
-	max-width: 70%; 
-	text-align: center
+.user-color.blue {
+    background: blue;
+}
+
+.hints-table > tbody > tr > td {
+	font-weight: bold
+}
+
+.leader-only, .member-only {
+	display: none;
+}
+
+.btn.toggle-leader {
+    width: 2.4em;
 }
