@@ -50,10 +50,14 @@ function updateState(changes) {
     const ut = $('.users-table').show()
     $('tbody', ut).html(state.members.map((e) => `<tr>
       <td> ${e.leader ? '<img class="image-crown" src="static/images/crown.jpg">' : ''} </td> 
-      <td> ${e.nick} <div class="user-color"></div></td>
+      <td>
+        <span class="dot"></span>
+      </td>
+      <td style="text-align:left"> ${e.nick} <div class="user-color"></div></td>
       <td class="leader-only">
         <button class="btn btn-${e.leader ? 'danger' : 'success'} toggle-leader" data-leader="${!!e.leader}">${e.leader ? '-' : '+'}</button>
       </td>
+
     </tr>`).join(''))
 
     $('.toggle-leader').click(function (el) {

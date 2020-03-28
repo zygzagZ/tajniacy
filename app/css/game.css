@@ -62,11 +62,42 @@
 }
 
 .users-table {
-	width: 50%;
-	margin-left: 25%;
+	width: 40%;
 	margin-top: 5%;
+	max-width: 400px;
+	margin-left: 5%;
+	margin-right: auto;
+}
+
+.words-table {
+	width: 30%;
+	margin-top: 5%;
+	margin-right: 5%;
+	max-width: 250px;
+}
+
+.row-tables {
+	width:100%;
 }
 
 .image-crown {
 	max-width: 1.5em;
+}
+
+.dot {
+  height: 2.5vh;
+  width: 2.5vh;
+  background-color: blue;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.new-word-btn {
+	max-width:25%; 
+	text-align: center
+}
+
+.new-word-input {
+	max-width: 70%; 
+	text-align: center
 }
