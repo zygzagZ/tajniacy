@@ -3,7 +3,7 @@
     padding-top: 10%;
     margin-left: 1%;
     margin-top: 1%;
-    border-radius: 1.7vh;
+    border-radius: 1em;
 }
 
 .card-bottom {
@@ -27,7 +27,7 @@
 }
 
 .card-color {
-	border-radius: 1.7vh;
+	border-radius: 1em;
 }
 .playground .card .card-color {
 	position: absolute;

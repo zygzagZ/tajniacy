@@ -5,6 +5,12 @@ const counts = {
   grey: 7
 }
 
+const dictionaries = []
+fetch('dictionaries.json').then((r) => r.json()).then((d) => {
+  dictionaries.push(...d)
+  $('#dictionary').html(dictionaries.map((name) => `<option>${name}</option>`).join())
+})
+
 function extend(source, target) {
   for (var i in target) {
     if (!Object.prototype.hasOwnProperty.call(target, i)) continue
@@ -28,6 +34,7 @@ function updateState(changes) {
       .text(`Zaczyna zespół ${changes.firstColor === 'red' ? 'czerwony' : 'niebieski'}.`)
       .css('color', changes.firstColor === 'red' ? 'lightcoral' : 'lightblue')
   }
+  if (changes.dictionary) $('#dictionary').val(changes.dictionary)
 
   extend(state, changes)
 
@@ -193,5 +200,9 @@ $(function () {
     const hint = $('input[name=hint]', this)
     if (!ws) return
     addHint(hint.val().trim())
+  })
+
+  $('#dictionary').on('change', function (ev) {
+    ws.sendJSON({ type: 'setDictionary', dictionary: $(this).val() })
   })
 })

@@ -9,12 +9,20 @@ const dictionary = JSON.parse(fs.readFileSync(path.join(__dirname, './words.json
 const app = express()
 const rooms = {}
 
+const mergedDict = dictionary['Wszystkie słowa'] = []
+
 const dictionaryNames = Object.keys(dictionary)
+for (var k in dictionary) {
+  dictionary[k].name = k
+  if (dictionary[k] !== mergedDict) {
+    mergedDict.push(...dictionary[k])
+  }
+}
 
 require('express-ws')(app)
 const expressStatic = express.static(dir)
 
-app.get('/dictionary.json', (res, req) => {
+app.get('/dictionaries.json', (res, req) => {
   req.send(dictionaryNames)
 })
 

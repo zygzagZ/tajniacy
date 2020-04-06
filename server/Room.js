@@ -19,31 +19,32 @@ export default class Room {
   // auth = {}
   // map = []
   // id = null
-  // kind = null
-  // dictionary
+  // dictionary = null
+  // dictionaries
   // firstColor
 
-  constructor(dictionary, kind) {
+  constructor(dictionaries, dict) {
     this.id = randomBase64(12)
-    this.dictionary = dictionary
+    this.dictionaries = dictionaries
     this.members = []
     this.leaders = []
     this.map = []
     this.auth = {}
 
     console.log(this.id, 'created')
-    this.setKind(kind)
+    this.setDictionary(dict)
     this.restart()
   }
 
-  setKind(kind) {
-    if (!this.dictionary[kind]) kind = Object.keys(this.dictionary)[0]
-    this.kind = kind
+  setDictionary(dict) {
+    if (!this.dictionaries[dict]) dict = Object.keys(this.dictionaries)[0]
+    this.leaders.forEach((l) => l.sendJSON({ dictionary: dict }))
+    this.dictionary = this.dictionaries[dict]
   }
 
   restart() {
     console.log(this.id, 'restart')
-    const words = shuffle([...this.dictionary[this.kind]]).slice(0, 25)
+    const words = shuffle([...this.dictionary]).slice(0, 25)
     this.firstColor = shuffle(['red', 'blue'])[0]
 
     const colors = [this.firstColor]
@@ -105,7 +106,7 @@ export default class Room {
     if (socket.leader) return
     socket.leader = true
     this.leaders.push(socket)
-    socket.sendJSON({ leader: true })
+    socket.sendJSON({ leader: true, dictionary: this.dictionary.name })
     this.sendMap(socket)
     if (broadcast) this.broadcastMembers()
   }
@@ -209,10 +210,12 @@ export default class Room {
       this.addMember(socket, socket.nick)
     } else if (!socket.member) {
       // remaining opcodes only for room members
+
     } else if (msg.type === 'ping') {
       socket.sendJSON({ pong: 1 })
     } else if (!socket.leader) {
       // remaining opcodes only for room leaders
+
     } else if (msg.type === 'addLeader' && typeof msg.nick === 'string') {
       const member = this.findMember(msg.nick)
       if (member) this.addLeader(member)
@@ -228,6 +231,8 @@ export default class Room {
       this.clickTile(msg.tile)
     } else if (msg.type === 'addHint' && typeof msg.hint === 'string') {
       this.addHint(socket, msg.hint.trim())
+    } else if (msg.type === 'setDictionary' && typeof msg.dictionary === 'string') {
+      this.setDictionary(msg.dictionary)
     }
   }
 
