@@ -92,13 +92,26 @@ export default class Room {
   }
 
   authorize(socket, token) {
-    const auth = this.auth[token]
+    let auth = this.auth[token]
+    if (!auth) {
+      this.members.forEach((m, i) => {
+        if (m.token !== token) return
+        auth = m
+        this.members[i] = socket
+      })
+      if (auth) {
+        this.removeMember(auth)
+        console.log('Player', auth.nick, 'authorized but old is still connected!')
+        auth.close()
+      }
+    }
     if (!auth) return
     socket.color = auth.color
     socket.nick = auth.nick
     socket.authorized = true
     if (auth.leader) this.addLeader(socket, false)
     delete this.auth[token]
+    this.addMember(socket, socket.nick)
     return true
   }
 
@@ -142,11 +155,13 @@ export default class Room {
       this.setNick(socket, nick, false)
     }
 
-    if (this.members.length === 1) {
-      this.addLeader(socket, false)
-    } else {
-      // addLeader calls them by itself
-      this.sendMap(socket)
+    if (!socket.authorized) {
+      if (this.members.length === 1) {
+        this.addLeader(socket, false)
+      } else {
+        // addLeader calls them by itself
+        this.sendMap(socket)
+      }
     }
 
     socket.token = randomBase64(24)
@@ -160,8 +175,10 @@ export default class Room {
   }
 
   removeMember(socket) {
+    if (!socket.member) return
     this.auth[socket.token] = { leader: socket.leader, color: socket.color, nick: socket.nick }
     this.members = this.members.filter((e) => e !== socket)
+    socket.member = false
     if (socket.leader) this.removeLeader(socket)
     else this.broadcastMembers()
   }
@@ -198,7 +215,9 @@ export default class Room {
     if (msg.type === 'setNick') {
       let nick = msg.nick && typeof msg.nick === 'string' && msg.nick.match(/^[A-Ża-ż0-9 _!]+$/)
       nick = nick && nick[0].trim()
-      if (!nick) return socket.sendJSON({ error: 'Niepoprawny nick!' })
+      if (!nick || this.members.filter((m) => m.nick === nick).length) {
+        return socket.sendJSON({ error: 'Niepoprawny nick!' })
+      }
 
       if (!socket.member) this.addMember(socket, nick)
       else this.setNick(socket, nick)
@@ -206,9 +225,7 @@ export default class Room {
       if (typeof msg.token !== 'string' || !this.authorize(socket, msg.token)) {
         socket.sendJSON({ error: 'Autoryzacja nieudana!' })
         socket.close()
-        return
       }
-      this.addMember(socket, socket.nick)
     } else if (!socket.member) {
       // remaining opcodes only for room members
 
