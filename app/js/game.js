@@ -4,6 +4,25 @@ const counts = {
   black: 1,
   grey: 7
 }
+function shuffle(array) {
+  let counter = array.length
+
+  // While there are elements in the array
+  while (counter > 0) {
+    // Pick a random index
+    const index = Math.floor(Math.random() * counter)
+
+    // Decrease counter by 1
+    counter--
+
+    // And swap the last element with it
+    const temp = array[counter]
+    array[counter] = array[index]
+    array[index] = temp
+  }
+
+  return array
+}
 
 const dictionaries = []
 fetch('dictionaries.json').then((r) => r.json()).then((d) => {
@@ -204,5 +223,27 @@ $(function () {
 
   $('#dictionary').on('change', function (ev) {
     ws.sendJSON({ type: 'setDictionary', dictionary: $(this).val() })
+  })
+
+  $('.shuffle-colors-btn').on('click', function (ev) {
+    ev.preventDefault()
+    const colors = []
+    const leaders = state.members.filter((m) => m.leader).length === 2 ? 2 : 0
+
+    for (var i = 0; i < state.members.length - leaders; i++) {
+      colors.push(i < (state.members.length - leaders) / 2 ? 'blue' : 'red')
+    }
+
+    shuffle(colors)
+    state.members.forEach((member) => {
+      if (member.leader && leaders) return
+      if (member.color !== colors[0]) {
+        ws.sendJSON({
+          type: 'switchColor',
+          nick: member.nick
+        })
+      }
+      colors.shift()
+    })
   })
 })
