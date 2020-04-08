@@ -127,7 +127,6 @@ export default class Room {
   removeLeader(socket) {
     if (!socket.leader) return
     this.leaders = this.leaders.filter((e) => e !== socket)
-    if (!this.leaders.length && this.members.length) this.addLeader(this.members[0])
     socket.leader = false
     socket.sendJSON({ leader: false })
     this.broadcastMembers()
