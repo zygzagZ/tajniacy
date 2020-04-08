@@ -153,7 +153,8 @@ export default class Room {
     socket.sendJSON({
       leader: socket.leader,
       token: socket.token,
-      firstColor: this.firstColor
+      firstColor: this.firstColor,
+      hints: this.hints
     })
     this.broadcastMembers()
   }
