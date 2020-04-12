@@ -154,13 +154,11 @@ export default class Room {
       this.setNick(socket, nick, false)
     }
 
-    if (!socket.authorized) {
-      if (this.members.length === 1) {
-        this.addLeader(socket, false)
-      } else {
-        // addLeader calls them by itself
-        this.sendMap(socket)
-      }
+    if (!socket.authorized || this.members.length === 1) {
+      this.addLeader(socket, false)
+    } else {
+      this.sendMap(socket)
+      // addLeader calls them by itself
     }
 
     socket.token = randomBase64(24)
