@@ -154,7 +154,9 @@ export default class Room {
       this.setNick(socket, nick, false)
     }
 
-    if (!socket.authorized && (this.members.length === 1 || this.leaders.length === 0)) {
+    // if player's reconnecting he shouldn't become a leader
+    // but if it's new player and there are no leaders in the room - he should so as not to lock the room
+    if (!socket.authorized && this.leaders.length === 0) {
       this.addLeader(socket, false)
     } else {
       this.sendMap(socket)
