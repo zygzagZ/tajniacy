@@ -101,3 +101,7 @@
 .hints-table td.blue {
     color: blue;
 }
+
+.bg-red {
+    background-color: darkred;
+}

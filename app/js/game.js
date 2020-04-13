@@ -130,13 +130,38 @@ function addHint(hint) {
   ws.sendJSON({ type: 'addHint', hint })
 }
 
-let lastJoin = 0
-function joinRoom(nick) {
-  if (Date.now() - lastJoin < 10000) {
-    return setTimeout(joinRoom, lastJoin + 10000 - Date.now(), nick)
-  }
-  lastJoin = Date.now()
+function connectWebsocket(opt) {
+  if (!opt.interval) opt.interval = 1000
+  ws = new WebSocket(document.location.href.replace(/^http/, 'ws'))
 
+  ws.addEventListener('error', (e) => {
+    console.error(e)
+    opt.interval = Math.min(opt.interval * 1.5, 30000)
+  })
+
+  ws.addEventListener('open', () => {
+    opt.interval = 1000
+    $('.navbar').removeClass('bg-red').addClass('bg-dark')
+  })
+
+  ws.addEventListener('close', (e) => {
+    $('.navbar').removeClass('bg-dark').addClass('bg-red')
+    setTimeout(connectWebsocket, opt.interval, opt)
+  })
+
+  ws.addEventListener('open', opt.open)
+  ws.addEventListener('close', opt.close)
+  ws.addEventListener('message', opt.message)
+
+  ws.sendJSON = (data) => {
+    console.log('>>>', data)
+    ws.send(JSON.stringify(data))
+  }
+
+  return ws
+}
+
+function onStart(nick) {
   const playground = $('.playground').html('')
   for (let i = 0; i < 5; i++) playground.append('<div class="row">')
   for (let i = 0; i < 5; i++) $('.row', playground).append('<div class="card col">')
@@ -155,50 +180,33 @@ function joinRoom(nick) {
     ws.sendJSON({ type: 'restart' })
   })
 
-  ws = new WebSocket(document.location.href.replace(/^http/, 'ws'))
-
   let pingInterval = null
   let lastPing = Date.now()
 
-  ws.onerror = (e) => {
-    console.error(e)
-    clearInterval(pingInterval)
-    if (state.map) {
-      state.map.forEach((e) => {
-        e.word = ''
-      })
+  const ping = () => {
+    lastPing = Date.now()
+    ws.sendJSON({ type: 'ping' })
+  }
+
+  connectWebsocket({
+    open: () => {
+      if (state.token) ws.sendJSON({ type: 'authorize', token: state.token })
+      else setNick(nick)
+
+      pingInterval = setInterval(ping, 10000)
+      ping()
+    },
+    close: () => {
+      clearInterval(pingInterval)
+    },
+    message: (e) => {
+      const data = JSON.parse(e.data)
+      if (data.pong) $('.ping').text(`Ping: ${Date.now() - lastPing} ms`)
+      if (data.redirect) document.location = data.redirect
+      console.log('<<<', data)
+      updateState(data)
     }
-  }
-
-  ws.onmessage = (e) => {
-    const data = JSON.parse(e.data)
-    if (data.pong) $('.ping').text(`Ping: ${Date.now() - lastPing} ms`)
-    if (data.redirect) document.location = data.redirect
-    console.log('<<<', data)
-    updateState(data)
-  }
-
-  ws.onopen = (e) => {
-    if (state.token) ws.sendJSON({ type: 'authorize', token: state.token })
-    else setNick(nick)
-
-    const ping = () => {
-      lastPing = Date.now()
-      ws.sendJSON({ type: 'ping' })
-    }
-    pingInterval = setInterval(ping, 10000)
-    ping()
-  }
-
-  ws.onclose = (e) => {
-    clearInterval(pingInterval)
-    joinRoom()
-  }
-
-  ws.sendJSON = (data) => {
-    console.log('>>>', data)
-    ws.send(JSON.stringify(data))
-  }
+  })
 }
 
 $(function () {
@@ -206,7 +214,7 @@ $(function () {
     ev.preventDefault()
     const nick = $('input[name=nick]', this).val().trim()
     if (!ws) {
-      joinRoom(nick)
+      onStart(nick)
       $('.member-only').show()
       $('.pre-login').hide()
     } else {
