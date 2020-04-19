@@ -1,4 +1,4 @@
-export default function shuffle(array) {
+export function shuffle(array) {
   let counter = array.length
 
   // While there are elements in the array
@@ -17,3 +17,4 @@ export default function shuffle(array) {
 
   return array
 }
+export const teamColors = ['red', 'blue']

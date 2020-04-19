@@ -1,4 +1,4 @@
-import shuffle from './shuffle.js'
+import { shuffle } from './const.js'
 const crypto = require('crypto')
 
 const counts = {
@@ -194,7 +194,7 @@ export default class Room {
     if (!tile || tile.clicked) return
     tile.clicked = true
 
-    console.log(`${socket.name} clicked tile ${tileIndex} "${tile.word}"`)
+    console.log(`${socket.nick} clicked tile ${tileIndex} "${tile.word}"`)
 
     this.broadcast({
       map: { [tileIndex]: { clicked: true, color: tile.color } },
