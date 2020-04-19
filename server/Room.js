@@ -31,7 +31,6 @@ export default class Room {
     this.map = []
     this.auth = {}
 
-    console.log(this.id, 'created')
     this.setDictionary(dict)
     this.restart()
   }
@@ -101,7 +100,6 @@ export default class Room {
       })
       if (auth) {
         this.removeMember(auth)
-        console.log('Player', auth.nick, 'authorized but old is still connected!')
         auth.close()
       }
     }
@@ -168,7 +166,8 @@ export default class Room {
       leader: socket.leader,
       token: socket.token,
       firstColor: this.firstColor,
-      hints: this.hints
+      hints: this.hints,
+      remaining: this.getRemainingTiles()
     })
     this.broadcastMembers()
   }
@@ -182,11 +181,25 @@ export default class Room {
     else this.broadcastMembers()
   }
 
-  clickTile(tileIndex) {
+  getRemainingTiles() {
+    const remaining = { red: 0, blue: 0 }
+    this.map.forEach((e) => {
+      if (!e.clicked) remaining[e.color]++
+    })
+    return remaining
+  }
+
+  clickTile(socket, tileIndex) {
     const tile = this.map[tileIndex]
     if (!tile || tile.clicked) return
     tile.clicked = true
-    this.broadcast({ map: { [tileIndex]: { clicked: true, color: tile.color } } })
+
+    console.log(`${socket.name} clicked tile ${tileIndex} "${tile.word}"`)
+
+    this.broadcast({
+      map: { [tileIndex]: { clicked: true, color: tile.color } },
+      remaining: this.getRemainingTiles()
+    })
   }
 
   setNick(socket, nick, broadcast = true) {
@@ -245,7 +258,7 @@ export default class Room {
     } else if (msg.type === 'restart') {
       this.restart()
     } else if (msg.type === 'click' && typeof msg.tile === 'number') {
-      this.clickTile(msg.tile)
+      this.clickTile(socket, msg.tile)
     } else if (msg.type === 'addHint' && typeof msg.hint === 'string') {
       this.addHint(socket, msg.hint.trim())
     } else if (msg.type === 'setDictionary' && typeof msg.dictionary === 'string') {
