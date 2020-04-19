@@ -18,3 +18,23 @@ export function shuffle(array) {
   return array
 }
 export const teamColors = ['red', 'blue']
+
+export const colorCounts = {
+  false: {
+    blue: 8,
+    red: 8,
+    black: 1,
+    grey: 7
+  },
+  true: {
+    black_red: 1,
+    grey_red: 5,
+    blue_red: 3,
+    blue_grey: 5,
+    blue_black: 1,
+    grey_black: 1,
+    black_grey: 1,
+    black_black: 1,
+    grey_grey: 7
+  }
+}

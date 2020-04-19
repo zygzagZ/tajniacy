@@ -105,3 +105,19 @@
 .bg-red {
     background-color: darkred;
 }
+
+.playground .card.border-red .card-color {
+    border: 0.5em solid red;
+}
+
+.playground .card.border-blue .card-color {
+    border: 0.5em solid blue;
+}
+
+.playground .card.border-black .card-color {
+    border: 0.5em solid black;
+}
+
+.playground .card.border-grey .card-color {
+    border: 0.5em solid #deb887;
+}

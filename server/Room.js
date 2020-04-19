@@ -1,12 +1,5 @@
-import { shuffle } from './const.js'
+import { shuffle, colorCounts } from './const.js'
 const crypto = require('crypto')
-
-const counts = {
-  blue: 8,
-  red: 8,
-  black: 1,
-  grey: 7
-}
 
 function randomBase64(len) {
   return crypto.randomBytes(12).toString('base64')
@@ -30,6 +23,7 @@ export default class Room {
     this.leaders = []
     this.map = []
     this.auth = {}
+    this.duet = false
 
     this.setDictionary(dict)
     this.restart()
@@ -42,13 +36,14 @@ export default class Room {
   }
 
   restart() {
-    console.log(this.id, 'restart')
     const words = shuffle([...this.dictionary]).slice(0, 25)
     this.firstColor = shuffle(['red', 'blue'])[0]
 
-    const colors = [this.firstColor]
-    for (var color in counts) {
-      colors.push(...new Array(counts[color]).fill(color))
+    const c = colorCounts[this.duet]
+
+    const colors = []
+    for (var color in c) {
+      colors.push(...new Array(c[color]).fill(color.split('_')))
     }
 
     shuffle(colors)
@@ -56,7 +51,7 @@ export default class Room {
     this.map = words.map((w, i) => ({
       word: w,
       color: colors[i],
-      clicked: false
+      clicked: [false, false]
     }))
 
     this.hints = []
@@ -79,13 +74,24 @@ export default class Room {
     })
   }
 
+  getTileDescription(socket, tile) {
+    const tileColor = []
+    const team = ['red', 'blue'].indexOf(socket.color)
+    if (this.duet) {
+      tileColor.push(tile.clicked[team] ? tile.color[team] : '')
+      if (socket.leader) tileColor.push(tile.color[1 - team])
+    } else if (tile.clicked[team] || socket.leader) tileColor.push(tile.color)
+
+    return {
+      clicked: tile.clicked[1 - team], // the other team clicked info
+      word: tile.word,
+      color: tileColor
+    }
+  }
+
   sendMap(socket) {
     const view = {
-      map: this.map.map((e) => ({
-        clicked: e.clicked,
-        word: e.word,
-        color: (e.clicked || socket.leader) ? e.color : null
-      }))
+      map: this.map.map((e) => this.getTileDescription(socket, e))
     }
     socket.sendJSON(view)
   }
@@ -182,24 +188,37 @@ export default class Room {
   }
 
   getRemainingTiles() {
+    if (this.duet) return null
     const remaining = { red: 0, blue: 0 }
     this.map.forEach((e) => {
-      if (!e.clicked) remaining[e.color]++
+      if (!e.clicked[0]) remaining[e.color]++
     })
     return remaining
   }
 
   clickTile(socket, tileIndex) {
     const tile = this.map[tileIndex]
-    if (!tile || tile.clicked) return
-    tile.clicked = true
+    const team = ['red', 'blue'].indexOf(socket.color)
+    if (!tile || tile.clicked[team]) return
+
+    tile.clicked[team] = true
+
+    const singleColor = !this.duet ? tile.color[0]
+      : tile.color.filter((c, i) => c !== 'grey' && tile.clicked[i])[0]
+
+    if (singleColor) {
+      tile.color = [singleColor, singleColor]
+      tile.clicked = [true, true]
+    }
 
     console.log(`${socket.nick} clicked tile ${tileIndex} "${tile.word}"`)
 
-    this.broadcast({
-      map: { [tileIndex]: { clicked: true, color: tile.color } },
-      remaining: this.getRemainingTiles()
-    })
+    const remaining = this.getRemainingTiles()
+    this.members.forEach((socket) => socket.sendJSON(
+      {
+        map: { [tileIndex]: this.getTileDescription(socket, tile) },
+        remaining
+      }))
   }
 
   setNick(socket, nick, broadcast = true) {
@@ -256,6 +275,9 @@ export default class Room {
       const member = this.findMember(msg.nick)
       if (member) this.switchColor(member)
     } else if (msg.type === 'restart') {
+      if (typeof msg.duet === 'boolean') {
+        this.duet = msg.duet
+      }
       this.restart()
     } else if (msg.type === 'click' && typeof msg.tile === 'number') {
       this.clickTile(socket, msg.tile)

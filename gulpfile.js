@@ -62,8 +62,8 @@ function scripts() {
         }))
         .pipe(sourcemaps.write('.')),
 
-      gulp.src(`./${el}/**/*.json`))
-      .pipe(gulp.dest(`./dist/${el}/`))
+      gulp.src(`./${el}/**/*.json`)
+    ).pipe(gulp.dest(`./dist/${el}/`))
   })
 
   // TODO: Po zmianie skryptu w game.js restartuje się serwer

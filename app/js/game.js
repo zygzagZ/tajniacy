@@ -65,11 +65,13 @@ function updateState(changes) {
       const tile = state.map[i]
 
       for (var color in counts) {
-        if (color !== tile.color) { el.removeClass(color) }
+        if (color !== tile.color[0]) { el.removeClass(color) }
+        if (color !== tile.color[1]) { el.removeClass(`border-${color}`) }
       }
 
       el.find('.card-word').text(tile.word)
-      if (tile.color) el.addClass(tile.color)
+      if (tile.color[0]) el.addClass(tile.color[0])
+      if (tile.color[1]) el.addClass(`border-${tile.color[1]}`)
 
       if (tile.clicked) { el.addClass('clicked') } else { el.removeClass('clicked') }
     })
@@ -177,7 +179,7 @@ function onStart(nick) {
     })
 
   $('.reset-game').click(function () {
-    ws.sendJSON({ type: 'restart' })
+    ws.sendJSON({ type: 'restart', duet: $(this).data('duet') })
   })
 
   let pingInterval = null
