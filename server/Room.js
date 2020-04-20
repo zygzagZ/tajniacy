@@ -42,7 +42,7 @@ export default class Room {
     const c = colorCounts[this.duet]
 
     const colors = []
-    if (!this.duet) colors.push(this.firstColor)
+    if (!this.duet) colors.push([this.firstColor])
 
     for (var color in c) {
       colors.push(...new Array(c[color]).fill(color.split('_')))
