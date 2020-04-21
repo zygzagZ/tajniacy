@@ -2,7 +2,8 @@ const counts = {
   blue: 8,
   red: 8,
   black: 1,
-  grey: 7
+  grey: 7,
+  green: 0
 }
 function shuffle(array) {
   let counter = array.length

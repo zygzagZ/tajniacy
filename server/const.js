@@ -27,11 +27,11 @@ export const colorCounts = {
     grey: 7
   },
   true: {
-    black_red: 1,
-    grey_red: 5,
-    blue_red: 3,
-    blue_grey: 5,
-    blue_black: 1,
+    black_green: 1,
+    grey_green: 5,
+    green_green: 3,
+    green_grey: 5,
+    green_black: 1,
     grey_black: 1,
     black_grey: 1,
     black_black: 1,

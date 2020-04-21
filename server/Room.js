@@ -1,4 +1,4 @@
-import { shuffle, colorCounts } from './const.js'
+import { shuffle, colorCounts, teamColors } from './const.js'
 const crypto = require('crypto')
 
 function randomBase64(len) {
@@ -37,7 +37,7 @@ export default class Room {
 
   restart() {
     const words = shuffle([...this.dictionary]).slice(0, 25)
-    this.firstColor = shuffle(['red', 'blue'])[0]
+    this.firstColor = shuffle([...teamColors])[0]
 
     const c = colorCounts[this.duet]
 
@@ -78,14 +78,17 @@ export default class Room {
 
   getTileDescription(socket, tile) {
     const tileColor = []
-    const team = ['red', 'blue'].indexOf(socket.color)
+    const team = teamColors.indexOf(socket.color)
     if (this.duet) {
-      tileColor.push(tile.clicked[team] ? tile.color[team] : '')
-      if (socket.leader) tileColor.push(tile.color[1 - team])
-    } else if (tile.clicked[team] || socket.leader) tileColor.push(tile.color)
+      tileColor.push(tile.clicked[1 - team] || socket.leader ? tile.color[1 - team] : '')
+      if (tile.clicked[0] !== tile.clicked[1]) {
+        const neutralTeam = tile.color.reduce((a, c, i) => c === 'grey' && tile.clicked[i] ? i : a, null)
+        if (neutralTeam !== null) tileColor.push(teamColors[neutralTeam])
+      }
+    } else if (tile.clicked[team] || socket.leader) tileColor.push(tile.color[0])
 
     return {
-      clicked: tile.clicked[1 - team], // the other team clicked info
+      clicked: tile.clicked[0] && tile.clicked[1], // the other team clicked info
       word: tile.word,
       color: tileColor
     }
@@ -151,7 +154,7 @@ export default class Room {
     socket.member = true
     if (!socket.authorized) {
       socket.leader = false
-      socket.color = shuffle(['red', 'blue'])[0]
+      socket.color = shuffle([...teamColors])[0]
     }
 
     if (!this.findMember(socket)) {
@@ -200,7 +203,7 @@ export default class Room {
 
   clickTile(socket, tileIndex) {
     const tile = this.map[tileIndex]
-    const team = ['red', 'blue'].indexOf(socket.color)
+    const team = teamColors.indexOf(socket.color)
     if (!tile || tile.clicked[team]) return
 
     tile.clicked[team] = true

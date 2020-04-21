@@ -27,7 +27,7 @@
 }
 
 .card-color {
-	border-radius: 1em;
+	border-radius: 0.9rem;
 }
 .playground .card .card-color {
 	position: absolute;
@@ -59,6 +59,10 @@
 
 .playground .card.grey .card-color {
 	background-color: #deb887;
+}
+
+.playground .card.green .card-color {
+	background-color: green;
 }
 
 .image-crown {
@@ -103,21 +107,13 @@
 }
 
 .bg-red {
-    background-color: darkred;
+	background-color: darkred;
 }
 
-.playground .card.border-red .card-color {
-    border: 0.5em solid red;
+.playground .card.border-red {
+	border: 2px solid red;
 }
 
-.playground .card.border-blue .card-color {
-    border: 0.5em solid blue;
-}
-
-.playground .card.border-black .card-color {
-    border: 0.5em solid black;
-}
-
-.playground .card.border-grey .card-color {
-    border: 0.5em solid #deb887;
+.playground .card.border-blue {
+	border: 2px solid blue;
 }
