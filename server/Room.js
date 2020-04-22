@@ -234,6 +234,7 @@ export default class Room {
   switchColor(socket, color) {
     socket.color = socket.color === 'red' ? 'blue' : 'red'
     this.broadcastMembers()
+    if (this.duet) this.sendMap(socket)
   }
 
   addHint(socket, hint) {
